@@ -18,6 +18,7 @@ import plotly.express as px
 planilha = pd.read_csv("cancelamentos.csv")
 
 #Passo 2: Visualizar a base de dados
+
 planilha = planilha.drop(columns="CustomerID") #retirar coluna CustomerID
 st.dataframe(planilha)
 
