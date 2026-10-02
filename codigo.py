@@ -17,6 +17,41 @@ import plotly.express as px
 
 planilha = pd.read_csv("cancelamentos.csv")
 
+
+# APRESENTAÇÃO DO PROJETO
+# =========================================================
+
+st.title("Análise de Cancelamento de Clientes")
+
+st.write(
+    """
+    Este projeto tem como objetivo analisar os principais fatores
+    associados ao cancelamento de clientes e identificar padrões
+    que possam ajudar na criação de estratégias de retenção.
+    
+    A análise foi realizada utilizando Python, Pandas, Plotly e Streamlit,
+    explorando informações relacionadas ao perfil dos clientes,
+    contratos, atendimento e pagamentos.
+    """
+)
+
+st.write("### O que será analisado")
+
+st.write(
+    """
+    Ao longo da análise, serão avaliados diferentes aspectos da base de clientes,
+    buscando entender quais características estão mais associadas ao cancelamento.
+    
+    Entre os principais pontos analisados estão:
+    
+    - Tipo e duração do contrato
+    - Número de ligações para o call center
+    - Dias de atraso no pagamento
+    - Taxa geral de cancelamento
+    - Outros fatores presentes na base de dados
+    """
+)
+
 #Passo 2: Visualizar a base de dados
 
 planilha = planilha.drop(columns="CustomerID") #retirar coluna CustomerID
