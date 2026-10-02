@@ -283,3 +283,6 @@ st.write(
     "atinja 21 dias de atraso, priorizando lembretes de pagamento, contatos "
     "proativos e alternativas para regularização da situação."
 )
+
+
+st.write(planilha["frequencia_uso"].value_counts().sort_index())
