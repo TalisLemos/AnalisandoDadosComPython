@@ -361,6 +361,15 @@ st.write(
 
 st.markdown("<br><br>", unsafe_allow_html=True)
 
+#Conclusão
+#===========================
+
+st.write("## Conclusão")
+
+st.write(
+    "Os dados analisados indicam diferenças relevantes nas taxas de cancelamento de acordo com o tipo de contrato, o número de interações com o call center e o tempo de atraso no pagamento. Esses padrões podem orientar ações preventivas de relacionamento, atendimento e cobrança, contribuindo para estratégias de retenção mais direcionadas."
+)
+
 
 
 
