@@ -219,10 +219,12 @@ st.write(
 # INSIGHT 2: DIAS DE ATRASO NO PAGAMENTO
 # =========================================================
 
-st.write("### 2. Dias de atraso no pagamento")
+planilha["faixa_atraso"] = planilha["dias_atraso"].apply(
+    lambda x: "Até 20 dias" if x <= 20 else "21 dias ou mais"
+)
 
 st.write(
-    planilha.groupby("dias_atraso")["cancelou"]
+    planilha.groupby("faixa_atraso")["cancelou"]
     .value_counts(normalize=True)
     .unstack(fill_value=0)
 )
