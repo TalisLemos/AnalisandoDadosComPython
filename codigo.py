@@ -77,7 +77,7 @@ st.write(
     """
 )
 
-st.write("### Clientes por situação de cancelamento")
+st.write("### Quantidade de clientes por situação de cancelamento")
 
 st.write(
     planilha["cancelou"].value_counts()
