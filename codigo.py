@@ -265,6 +265,17 @@ grafico_atrasos.update_layout(
 
 st.plotly_chart(grafico_atrasos)
 
+# Interpretação
+
+st.write("### O que os dados indicam?")
+
+st.write(
+    f"Entre os clientes com até 20 dias de atraso no pagamento, "
+    f"{cancelamento_ate_20:.2f}% cancelaram o serviço. "
+    f"Já entre os clientes com 21 dias ou mais de atraso, "
+    f"a taxa de cancelamento foi de {cancelamento_21_mais:.2f}%."
+)
+
 st.write("### Recomendação")
 
 st.write(
