@@ -285,14 +285,6 @@ st.write(
 )
 
 
-planilha["faixa_frequencia"] = planilha["frequencia_uso"].apply(
-    lambda x: "Baixa" if x <= 2 else "Média" if x <= 4 else "Alta"
-)
-
-st.write(planilha["faixa_frequencia"].value_counts())
-
-
-# =========================================================
 # INSIGHT 3: LIGAÇÕES PARA O CALL CENTER
 # =========================================================
 
