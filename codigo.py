@@ -161,15 +161,6 @@ cancelamento_trimestral = contratos.loc["Quarterly", "Sim"] * 100
 cancelamento_anual = contratos.loc["Annual", "Sim"] * 100
 
 
-# Mostrar os resultados
-
-st.write("### Taxa de cancelamento por tipo de contrato")
-
-st.write(f"**Mensal:** {cancelamento_mensal:.2f}%")
-st.write(f"**Trimestral:** {cancelamento_trimestral:.2f}%")
-st.write(f"**Anual:** {cancelamento_anual:.2f}%")
-
-
 # Gráfico
 
 dados_contratos = pd.DataFrame({
@@ -213,11 +204,6 @@ st.write(
     f"apresentam {cancelamento_anual:.2f}%."
 )
 
-st.write(
-    "Os dados permitem comparar diretamente a ocorrência de cancelamentos "
-    "entre os diferentes formatos de contrato."
-)
-
 
 # Recomendação
 
@@ -228,3 +214,11 @@ st.write(
     "formatos trimestrais ou anuais, considerando as diferenças observadas "
     "nas taxas de cancelamento."
 )
+
+
+# INSIGHT 2: DIAS DE ATRASO NO PAGAMENTO
+# =========================================================
+
+st.write("### 2. Dias de atraso no pagamento")
+
+planilha["dias_atraso"].describe()
