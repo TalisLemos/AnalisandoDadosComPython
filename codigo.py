@@ -21,8 +21,15 @@ planilha = pd.read_csv("cancelamentos.csv")
 # APRESENTAÇÃO DO PROJETO
 # =========================================================
 
-st.title("Python Insights:")
-st.header("Analisando Dados com Python")
+st.markdown(
+    """
+    <h1 style="line-height: 1.1;">
+        Python Insights:<br>
+        Analisando Dados com Python
+    </h1>
+    """,
+    unsafe_allow_html=True
+)
 
 st.write("## Case: Cancelamento de Clientes")
 
