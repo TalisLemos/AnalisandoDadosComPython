@@ -45,15 +45,8 @@ st.write(
     """
 )
 
-st.write("### Objetivo da análise")
+st.write("## Base de dados")
 
-st.write(
-    """
-    Entender quais características dos clientes estão mais associadas
-    ao cancelamento e, a partir desses padrões, identificar possíveis
-    oportunidades de atuação para reduzir a perda de clientes.
-    """
-)
 #Passo 2: Visualizar a base de dados
 
 planilha = planilha.drop(columns="CustomerID") #retirar coluna CustomerID
