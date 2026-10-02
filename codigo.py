@@ -77,19 +77,20 @@ st.write(
     """
 )
 
-st.write("### Quantidade de clientes")
+st.write("### Clientes por situação de cancelamento")
 
 st.write(
     planilha["cancelou"].value_counts()
 )
 
-st.write("### Proporção de clientes")
+st.write("### Percentual de clientes por situação de cancelamento")
 
 st.write(
     planilha["cancelou"]
     .value_counts(normalize=True)
     .map("{:.2%}".format)
 )
+
 #Passo 5: Analise detalhada (causa do cancelamento dos clientes, como cada coluna impacta no cancelamento)
 
 for coluna in planilha.columns:
