@@ -354,7 +354,7 @@ st.write(
 st.write("### Recomendação")
 
 st.write(
-    "Criar ações preventivas de relacionamento antes que o cliente "
+    "Criar ações preventivas de cobrança e relacionamento antes que o cliente "
     "atinja 21 dias de atraso, priorizando lembretes de pagamento, contatos "
     "proativos e alternativas para regularização da situação."
 )
