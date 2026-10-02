@@ -107,7 +107,15 @@ st.write(
 #Passo 5: Analise detalhada (causa do cancelamento dos clientes, como cada coluna impacta no cancelamento)
 
 for coluna in planilha.columns:
-    grafico = px.histogram(planilha, x=coluna, color="cancelou", text_auto=True)
+
+    grafico = px.histogram(
+        planilha,
+        x=coluna,
+        color="cancelou",
+        text_auto=True,
+        title=f"Cancelamentos por {coluna}"
+    )
+
     st.plotly_chart(grafico)
 #Todo mundo do contrato mensal, cancelou o serviço
     #Criar politica: Vamos dar desconto para migração para contrato anual e trimestral
