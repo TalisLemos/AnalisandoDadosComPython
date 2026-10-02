@@ -221,4 +221,4 @@ st.write(
 
 st.write("### 2. Dias de atraso no pagamento")
 
-planilha["dias_atraso"].describe()
+st.write(planilha["dias_atraso"].describe())
