@@ -221,4 +221,8 @@ st.write(
 
 st.write("### 2. Dias de atraso no pagamento")
 
-st.write(planilha["dias_atraso"].describe())
+st.write(
+    planilha.groupby("dias_atraso")["cancelou"]
+    .value_counts(normalize=True)
+    .unstack(fill_value=0)
+)
