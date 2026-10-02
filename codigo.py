@@ -53,19 +53,25 @@ for coluna in planilha.columns:
 #Atraso no pagamento acuma de 20 dias, o cliente cancela
     #Criar politica: se o cliente atrasar 15 dias no pagamento, alerta vermelho
 
-#Fitrar a base de dados
-#duracao_contrato -> diferente de monthly
+# Análise do cancelamento por tipo de contrato
 
-condicao1 = planilha["duracao_contrato"] != "Monthly"
-planilha = planilha[condicao1]
-st.write(planilha["cancelou"].value_counts(normalize=True).map("{:.2%}".format)) #calcular porcentagem
+contratos_nao_mensais = planilha[
+    planilha["duracao_contrato"] != "Monthly"
+]
 
-#ligacao_callcenter -> menos ou iguais a 4
-condicao2 = planilha["ligacoes_callcenter"] <= 4
-planilha = planilha[condicao2]
-st.write(planilha["cancelou"].value_counts(normalize=True).map("{:.2%}".format)) #calcular porcentagem
+st.write(
+    contratos_nao_mensais["cancelou"]
+    .value_counts(normalize=True)
+    .map("{:.2%}".format)
+)
 
-#dias_atraso -> menores ou iguais a 20
-condicao3 = planilha["dias_atraso"] <= 20
-planilha = planilha[condicao3]
-st.write(planilha["cancelou"].value_counts(normalize=True).map("{:.2%}".format)) #calcular porcentagem
+
+contratos_mensais = planilha[
+    planilha["duracao_contrato"] == "Monthly"
+]
+
+st.write(
+    contratos_mensais["cancelou"]
+    .value_counts(normalize=True)
+    .map("{:.2%}".format)
+)
