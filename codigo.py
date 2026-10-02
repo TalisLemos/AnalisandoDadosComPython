@@ -106,14 +106,26 @@ st.write(
 
 #Passo 5: Analise detalhada (causa do cancelamento dos clientes, como cada coluna impacta no cancelamento)
 
-for coluna in planilha.columns:
+nomes_colunas = {
+    "idade": "Cancelamentos por idade",
+    "sexo": "Cancelamentos por sexo",
+    "tempo_como_cliente": "Cancelamentos por tempo como cliente",
+    "frequencia_uso": "Cancelamentos por frequência de uso",
+    "ligacoes_callcenter": "Cancelamentos por número de ligações ao call center",
+    "dias_atraso": "Cancelamentos por dias de atraso no pagamento",
+    "assinatura": "Cancelamentos por tipo de assinatura",
+    "duracao_contrato": "Cancelamentos por duração do contrato",
+    "total_gasto": "Cancelamentos por total gasto",
+    "meses_ultima_interacao": "Cancelamentos por meses desde a última interação"
+}
 
+for coluna in nomes_colunas:
     grafico = px.histogram(
         planilha,
         x=coluna,
         color="cancelou",
         text_auto=True,
-        title=f"Cancelamentos por {coluna}"
+        title=nomes_colunas[coluna]
     )
 
     st.plotly_chart(grafico)
