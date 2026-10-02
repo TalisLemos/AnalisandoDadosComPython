@@ -54,60 +54,82 @@ for coluna in planilha.columns:
     #Criar politica: se o cliente atrasar 15 dias no pagamento, alerta vermelho
 
 # INSIGHT 1: TIPO DE CONTRATO
-# =========================================================
-
 st.write("## Insights e recomendações")
 
 st.write("### 1. Tipo de contrato")
 
 
-# Contratos diferentes do mensal
+# Análise de cada tipo de contrato
 
-contratos_nao_mensais = planilha[
-    planilha["duracao_contrato"] != "Monthly"
-]
-
-resultado_nao_mensais = (
-    contratos_nao_mensais["cancelou"]
+contratos = (
+    planilha
+    .groupby("duracao_contrato")["cancelou"]
     .value_counts(normalize=True)
-    .map("{:.2%}".format)
+    .unstack(fill_value=0)
 )
 
-st.write("**Contratos de maior duração:**")
+# Taxa de cancelamento de cada contrato
 
-st.write(resultado_nao_mensais)
+cancelamento_mensal = contratos.loc["Monthly", "Sim"] * 100
+cancelamento_trimestral = contratos.loc["Quarterly", "Sim"] * 100
+cancelamento_anual = contratos.loc["Annual", "Sim"] * 100
 
 
-# Contratos mensais
+# Mostrar os resultados
 
-contratos_mensais = planilha[
-    planilha["duracao_contrato"] == "Monthly"
-]
+st.write("### Taxa de cancelamento por tipo de contrato")
 
-resultado_mensais = (
-    contratos_mensais["cancelou"]
-    .value_counts(normalize=True)
-    .map("{:.2%}".format)
+st.write(f"**Mensal:** {cancelamento_mensal:.2f}%")
+st.write(f"**Trimestral:** {cancelamento_trimestral:.2f}%")
+st.write(f"**Anual:** {cancelamento_anual:.2f}%")
+
+
+# Gráfico
+
+dados_contratos = pd.DataFrame({
+    "Tipo de contrato": ["Mensal", "Trimestral", "Anual"],
+    "Taxa de cancelamento": [
+        cancelamento_mensal,
+        cancelamento_trimestral,
+        cancelamento_anual
+    ]
+})
+
+grafico_contratos = px.bar(
+    dados_contratos,
+    x="Tipo de contrato",
+    y="Taxa de cancelamento",
+    text="Taxa de cancelamento",
+    title="Taxa de cancelamento por tipo de contrato"
 )
 
-st.write("**Contratos mensais:**")
+grafico_contratos.update_traces(
+    texttemplate="%{text:.2f}%",
+    textposition="outside"
+)
 
-st.write(resultado_mensais)
+grafico_contratos.update_layout(
+    yaxis_title="Taxa de cancelamento (%)",
+    xaxis_title="Tipo de contrato"
+)
+
+st.plotly_chart(grafico_contratos)
 
 
-# Interpretação do resultado
+# Interpretação
 
 st.write("### O que os dados indicam?")
 
 st.write(
-    "Clientes com contrato mensal apresentam uma taxa de cancelamento de "
-    "100%, enquanto entre os clientes com contratos de maior duração a taxa "
-    "de cancelamento é de 46,14%."
+    f"Clientes com contrato mensal apresentam uma taxa de cancelamento "
+    f"de {cancelamento_mensal:.2f}%, enquanto os contratos trimestrais "
+    f"apresentam {cancelamento_trimestral:.2f}% e os contratos anuais "
+    f"apresentam {cancelamento_anual:.2f}%."
 )
 
 st.write(
-    "Esse resultado indica uma forte associação entre contratos mensais "
-    "e maior ocorrência de cancelamentos."
+    "Os dados permitem comparar diretamente a ocorrência de cancelamentos "
+    "entre os diferentes formatos de contrato."
 )
 
 
@@ -116,7 +138,7 @@ st.write(
 st.write("### Recomendação")
 
 st.write(
-    "Criar estratégias para incentivar clientes com contrato mensal a "
-    "migrarem para contratos de maior duração, como contratos trimestrais "
-    "ou anuais."
+    "Avaliar estratégias de incentivo à migração do contrato mensal para "
+    "formatos trimestrais ou anuais, considerando as diferenças observadas "
+    "nas taxas de cancelamento."
 )
