@@ -215,80 +215,13 @@ st.write(
     "nas taxas de cancelamento."
 )
 
+st.markdown("<br><br>", unsafe_allow_html=True)
 
-# INSIGHT 2: DIAS DE ATRASO NO PAGAMENTO
+
+# INSIGHT 2: LIGAÇÕES PARA O CALL CENTER
 # =========================================================
 
-st.write("### 2. Dias de atraso no pagamento")
-
-# Agrupar clientes por faixa de atraso
-
-planilha["faixa_atraso"] = planilha["dias_atraso"].apply(
-    lambda x: "Até 20 dias" if x <= 20 else "21 dias ou mais"
-)
-
-atrasos = (
-    planilha
-    .groupby("faixa_atraso")["cancelou"]
-    .value_counts(normalize=True)
-    .unstack(fill_value=0)
-)
-
-cancelamento_ate_20 = atrasos.loc["Até 20 dias", "Sim"] * 100
-cancelamento_21_mais = atrasos.loc["21 dias ou mais", "Sim"] * 100
-
-dados_atrasos = pd.DataFrame({
-    "Faixa de atraso": ["Até 20 dias", "21 dias ou mais"],
-    "Taxa de cancelamento": [
-        cancelamento_ate_20,
-        cancelamento_21_mais
-    ]
-})
-
-grafico_atrasos = px.bar(
-    dados_atrasos,
-    x="Faixa de atraso",
-    y="Taxa de cancelamento",
-    text="Taxa de cancelamento",
-    title="Taxa de cancelamento por faixa de atraso no pagamento"
-)
-
-grafico_atrasos.update_traces(
-    texttemplate="%{text:.2f}%",
-    textposition="outside"
-)
-
-grafico_atrasos.update_layout(
-    yaxis_title="Taxa de cancelamento (%)",
-    xaxis_title="Faixa de atraso"
-)
-
-st.plotly_chart(grafico_atrasos)
-
-# Interpretação
-
-st.write("### O que os dados indicam?")
-
-st.write(
-    f"Entre os clientes com até 20 dias de atraso no pagamento, "
-    f"{cancelamento_ate_20:.2f}% cancelaram o serviço. "
-    f"Já entre os clientes com 21 dias ou mais de atraso, "
-    f"a taxa de cancelamento foi de {cancelamento_21_mais:.2f}%."
-)
-
-st.write("### Recomendação")
-
-st.write(
-    "Criar ações preventivas de cobrança e relacionamento antes que o cliente "
-    "atinja 21 dias de atraso, priorizando lembretes de pagamento, contatos "
-    "proativos e alternativas para regularização da situação."
-)
-
-
-# INSIGHT 3: LIGAÇÕES PARA O CALL CENTER
-# =========================================================
-
-st.write("### 3. Ligações para o call center")
+st.write("### 2. Ligações para o call center")
 
 # Criar faixas de quantidade de ligações
 planilha["faixa_ligacoes"] = planilha["ligacoes_callcenter"].apply(
@@ -357,5 +290,79 @@ st.write(
     "e avaliar ações de atendimento e resolução de problemas antes que "
     "o número de contatos aumente."
 )
+
+st.markdown("<br><br>", unsafe_allow_html=True)
+
+# INSIGHT 3: DIAS DE ATRASO NO PAGAMENTO
+# =========================================================
+
+st.write("### 3. Dias de atraso no pagamento")
+
+# Agrupar clientes por faixa de atraso
+
+planilha["faixa_atraso"] = planilha["dias_atraso"].apply(
+    lambda x: "Até 20 dias" if x <= 20 else "21 dias ou mais"
+)
+
+atrasos = (
+    planilha
+    .groupby("faixa_atraso")["cancelou"]
+    .value_counts(normalize=True)
+    .unstack(fill_value=0)
+)
+
+cancelamento_ate_20 = atrasos.loc["Até 20 dias", "Sim"] * 100
+cancelamento_21_mais = atrasos.loc["21 dias ou mais", "Sim"] * 100
+
+dados_atrasos = pd.DataFrame({
+    "Faixa de atraso": ["Até 20 dias", "21 dias ou mais"],
+    "Taxa de cancelamento": [
+        cancelamento_ate_20,
+        cancelamento_21_mais
+    ]
+})
+
+grafico_atrasos = px.bar(
+    dados_atrasos,
+    x="Faixa de atraso",
+    y="Taxa de cancelamento",
+    text="Taxa de cancelamento",
+    title="Taxa de cancelamento por faixa de atraso no pagamento"
+)
+
+grafico_atrasos.update_traces(
+    texttemplate="%{text:.2f}%",
+    textposition="outside"
+)
+
+grafico_atrasos.update_layout(
+    yaxis_title="Taxa de cancelamento (%)",
+    xaxis_title="Faixa de atraso"
+)
+
+st.plotly_chart(grafico_atrasos)
+
+# Interpretação
+
+st.write("### O que os dados indicam?")
+
+st.write(
+    f"Entre os clientes com até 20 dias de atraso no pagamento, "
+    f"{cancelamento_ate_20:.2f}% cancelaram o serviço. "
+    f"Já entre os clientes com 21 dias ou mais de atraso, "
+    f"a taxa de cancelamento foi de {cancelamento_21_mais:.2f}%."
+)
+
+st.write("### Recomendação")
+
+st.write(
+    "Criar ações preventivas de cobrança e relacionamento antes que o cliente "
+    "atinja 21 dias de atraso, priorizando lembretes de pagamento, contatos "
+    "proativos e alternativas para regularização da situação."
+)
+
+st.markdown("<br><br>", unsafe_allow_html=True)
+
+
 
 
