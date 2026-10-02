@@ -71,9 +71,6 @@ st.write(
     """
     Nesta etapa, analisamos a quantidade de clientes que cancelaram o
     serviço e a proporção de cancelamentos em relação ao total da base.
-    
-    A primeira tabela apresenta a quantidade de clientes em cada situação.
-    A segunda mostra a representatividade de cada situação em percentual.
     """
 )
 
@@ -89,6 +86,22 @@ st.write(
     planilha["cancelou"]
     .value_counts(normalize=True)
     .map("{:.2%}".format)
+)
+
+
+# ANÁLISE DOS FATORES ASSOCIADOS AO CANCELAMENTO
+# =========================================================
+
+st.write("## Análise dos fatores associados ao cancelamento")
+
+st.write(
+    """
+    Nesta etapa, analisamos diferentes características dos clientes
+    para identificar padrões associados ao cancelamento.
+    
+    Os gráficos abaixo permitem comparar o comportamento dos clientes
+    que cancelaram o serviço com aqueles que permaneceram ativos.
+    """
 )
 
 #Passo 5: Analise detalhada (causa do cancelamento dos clientes, como cada coluna impacta no cancelamento)
