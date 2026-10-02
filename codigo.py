@@ -35,7 +35,7 @@ st.write("## Case: Cancelamento de Clientes")
 
 st.write(
     """
-    Uma empresa com mais de 800 mil clientes identificou que grande parte
+    Uma empresa com mais de 45 mil clientes identificou que grande parte
     da sua base é composta por clientes inativos, ou seja, clientes que
     já cancelaram o serviço.
 
@@ -65,10 +65,31 @@ planilha.info() #verificar resultado
 
 #Passo 4: Analise Inicial (entender quantos clientes cancelaram)
 
-st.write(planilha["cancelou"].value_counts()) #contar quantidade de clientes que calcularam
+st.write("## Análise geral dos cancelamentos")
 
-st.write(planilha["cancelou"].value_counts(normalize=True).map("{:.2%}".format)) #calcular porcentagem
+st.write(
+    """
+    Nesta etapa, analisamos a quantidade de clientes que cancelaram o
+    serviço e a proporção de cancelamentos em relação ao total da base.
+    
+    A primeira tabela apresenta a quantidade de clientes em cada situação.
+    A segunda mostra a representatividade de cada situação em percentual.
+    """
+)
 
+st.write("### Quantidade de clientes")
+
+st.write(
+    planilha["cancelou"].value_counts()
+)
+
+st.write("### Proporção de clientes")
+
+st.write(
+    planilha["cancelou"]
+    .value_counts(normalize=True)
+    .map("{:.2%}".format)
+)
 #Passo 5: Analise detalhada (causa do cancelamento dos clientes, como cada coluna impacta no cancelamento)
 
 for coluna in planilha.columns:
