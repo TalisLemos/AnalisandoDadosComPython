@@ -221,16 +221,50 @@ st.write(
 
 st.write("### 2. Dias de atraso no pagamento")
 
-planilha["faixa_atraso"] = planilha["dias_atraso"].apply(
-    lambda x: "Até 20 dias" if x <= 20 else "21 dias ou mais"
-)
+# Agrupar clientes por faixa de atraso
 
-st.write(
-    planilha.groupby("faixa_atraso")["cancelou"]
+atrasos = (
+    planilha
+    .groupby("faixa_atraso")["cancelou"]
     .value_counts(normalize=True)
     .unstack(fill_value=0)
 )
 
+cancelamento_ate_20 = atrasos.loc["Até 20 dias", "Sim"] * 100
+cancelamento_21_mais = atrasos.loc["21 dias ou mais", "Sim"] * 100
+
+dados_atrasos = pd.DataFrame({
+    "Faixa de atraso": ["Até 20 dias", "21 dias ou mais"],
+    "Taxa de cancelamento": [
+        cancelamento_ate_20,
+        cancelamento_21_mais
+    ]
+})
+
+grafico_atrasos = px.bar(
+    dados_atrasos,
+    x="Faixa de atraso",
+    y="Taxa de cancelamento",
+    text="Taxa de cancelamento",
+    title="Taxa de cancelamento por faixa de atraso no pagamento"
+)
+
+grafico_atrasos.update_traces(
+    texttemplate="%{text:.2f}%",
+    textposition="outside"
+)
+
+grafico_atrasos.update_layout(
+    yaxis_title="Taxa de cancelamento (%)",
+    xaxis_title="Faixa de atraso"
+)
+
+st.plotly_chart(grafico_atrasos)
+
+st.write("### Recomendação")
+
 st.write(
-    planilha["faixa_atraso"].value_counts()
+    "Criar ações preventivas de cobrança e relacionamento antes que o cliente "
+    "atinja 21 dias de atraso, priorizando lembretes de pagamento, contatos "
+    "proativos e alternativas para regularização da situação."
 )
