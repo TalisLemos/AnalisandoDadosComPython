@@ -53,25 +53,70 @@ for coluna in planilha.columns:
 #Atraso no pagamento acuma de 20 dias, o cliente cancela
     #Criar politica: se o cliente atrasar 15 dias no pagamento, alerta vermelho
 
-# Análise do cancelamento por tipo de contrato
+# INSIGHT 1: TIPO DE CONTRATO
+# =========================================================
+
+st.write("## Insights e recomendações")
+
+st.write("### 1. Tipo de contrato")
+
+
+# Contratos diferentes do mensal
 
 contratos_nao_mensais = planilha[
     planilha["duracao_contrato"] != "Monthly"
 ]
 
-st.write(
+resultado_nao_mensais = (
     contratos_nao_mensais["cancelou"]
     .value_counts(normalize=True)
     .map("{:.2%}".format)
 )
 
+st.write("**Contratos de maior duração:**")
+
+st.write(resultado_nao_mensais)
+
+
+# Contratos mensais
 
 contratos_mensais = planilha[
     planilha["duracao_contrato"] == "Monthly"
 ]
 
-st.write(
+resultado_mensais = (
     contratos_mensais["cancelou"]
     .value_counts(normalize=True)
     .map("{:.2%}".format)
+)
+
+st.write("**Contratos mensais:**")
+
+st.write(resultado_mensais)
+
+
+# Interpretação do resultado
+
+st.write("### O que os dados indicam?")
+
+st.write(
+    "Clientes com contrato mensal apresentam uma taxa de cancelamento de "
+    "100%, enquanto entre os clientes com contratos de maior duração a taxa "
+    "de cancelamento é de 46,14%."
+)
+
+st.write(
+    "Esse resultado indica uma forte associação entre contratos mensais "
+    "e maior ocorrência de cancelamentos."
+)
+
+
+# Recomendação
+
+st.write("### Recomendação")
+
+st.write(
+    "Criar estratégias para incentivar clientes com contrato mensal a "
+    "migrarem para contratos de maior duração, como contratos trimestrais "
+    "ou anuais."
 )
