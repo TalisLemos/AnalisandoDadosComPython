@@ -290,10 +290,12 @@ st.write(
 
 st.write("### 3. Ligações para o call center")
 
+# Criar faixas de quantidade de ligações
 planilha["faixa_ligacoes"] = planilha["ligacoes_callcenter"].apply(
     lambda x: "Até 3 ligações" if x <= 3 else "4 ligações ou mais"
 )
 
+# Calcular a taxa de cancelamento por faixa
 ligacoes = (
     planilha
     .groupby("faixa_ligacoes")["cancelou"]
@@ -304,7 +306,7 @@ ligacoes = (
 cancelamento_ate_3 = ligacoes.loc["Até 3 ligações", "Sim"] * 100
 cancelamento_4_mais = ligacoes.loc["4 ligações ou mais", "Sim"] * 100
 
-
+# Criar tabela para o gráfico
 dados_ligacoes = pd.DataFrame({
     "Faixa de ligações": [
         "Até 3 ligações",
@@ -315,3 +317,45 @@ dados_ligacoes = pd.DataFrame({
         cancelamento_4_mais
     ]
 })
+
+# Criar gráfico
+grafico_ligacoes = px.bar(
+    dados_ligacoes,
+    x="Faixa de ligações",
+    y="Taxa de cancelamento",
+    text="Taxa de cancelamento",
+    title="Taxa de cancelamento por número de ligações ao call center"
+)
+
+grafico_ligacoes.update_traces(
+    texttemplate="%{text:.2f}%",
+    textposition="outside"
+)
+
+grafico_ligacoes.update_layout(
+    yaxis_title="Taxa de cancelamento (%)",
+    xaxis_title="Número de ligações ao call center"
+)
+
+st.plotly_chart(grafico_ligacoes)
+
+# Interpretação
+st.write("### O que os dados indicam?")
+
+st.write(
+    f"Entre os clientes que realizaram até 3 ligações para o call center, "
+    f"{cancelamento_ate_3:.2f}% cancelaram o serviço. "
+    f"Já entre os clientes que realizaram 4 ligações ou mais, "
+    f"a taxa de cancelamento foi de {cancelamento_4_mais:.2f}%."
+)
+
+# Recomendação
+st.write("### Recomendação")
+
+st.write(
+    "Monitorar clientes que realizam múltiplas ligações para o call center "
+    "e avaliar ações de atendimento e resolução de problemas antes que "
+    "o número de contatos aumente."
+)
+```
+
