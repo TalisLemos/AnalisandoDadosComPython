@@ -69,8 +69,7 @@ st.write("## Análise geral dos cancelamentos")
 
 st.write(
     """
-    Nesta etapa, analisamos a quantidade de clientes que cancelaram o
-    serviço e a proporção de cancelamentos em relação ao total da base.
+    Nesta etapa, analisamos a quantidade de clientes em cada situação de cancelamento e sua representatividade em relação ao total da base
     """
 )
 
@@ -198,7 +197,7 @@ st.plotly_chart(grafico_contratos)
 st.write("### O que os dados indicam?")
 
 st.write(
-    f"Clientes com contrato mensal apresentam uma taxa de cancelamento "
+    f"Na base analisada, clientes com contrato mensal apresentam uma taxa de cancelamento de "
     f"de {cancelamento_mensal:.2f}%, enquanto os contratos trimestrais "
     f"apresentam {cancelamento_trimestral:.2f}% e os contratos anuais "
     f"apresentam {cancelamento_anual:.2f}%."
@@ -276,10 +275,10 @@ st.plotly_chart(grafico_ligacoes)
 st.write("### O que os dados indicam?")
 
 st.write(
-    f"Entre os clientes que realizaram até 3 ligações para o call center, "
-    f"{cancelamento_ate_3:.2f}% cancelaram o serviço. "
-    f"Já entre os clientes que realizaram 4 ligações ou mais, "
-    f"a taxa de cancelamento foi de {cancelamento_4_mais:.2f}%."
+    f"Na base analisada, clientes que realizaram 4 ligações ou mais para o "
+    f"call center apresentam uma taxa de cancelamento de {cancelamento_4_mais:.2f}%, "
+    f"enquanto entre aqueles que realizaram até 3 ligações a taxa foi de "
+    f"{cancelamento_ate_3:.2f}%."
 )
 
 # Recomendação
@@ -347,10 +346,10 @@ st.plotly_chart(grafico_atrasos)
 st.write("### O que os dados indicam?")
 
 st.write(
-    f"Entre os clientes com até 20 dias de atraso no pagamento, "
-    f"{cancelamento_ate_20:.2f}% cancelaram o serviço. "
-    f"Já entre os clientes com 21 dias ou mais de atraso, "
-    f"a taxa de cancelamento foi de {cancelamento_21_mais:.2f}%."
+    f"Na base analisada, clientes com 21 dias ou mais de atraso no pagamento "
+    f"apresentam uma taxa de cancelamento de {cancelamento_21_mais:.2f}%, "
+    f"enquanto entre aqueles com até 20 dias de atraso a taxa foi de "
+    f"{cancelamento_ate_20:.2f}%."
 )
 
 st.write("### Recomendação")
