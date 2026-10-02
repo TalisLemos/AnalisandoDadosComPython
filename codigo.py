@@ -38,10 +38,9 @@ st.write(
     Uma empresa com mais de 45 mil clientes identificou que grande parte
     da sua base é composta por clientes inativos, ou seja, clientes que
     já cancelaram o serviço.
-
-    Diante desse cenário, o objetivo deste projeto é analisar os dados
-    disponíveis para entender o comportamento dos cancelamentos e identificar
-    oportunidades que possam contribuir para a redução da taxa de churn.
+    
+    Diante desse cenário, o objetivo deste projeto é analisar os dados 
+    disponíveis para entender os padrões associados aos cancelamentos e identificar oportunidades que possam contribuir para a redução da taxa de churn.
     """
 )
 
@@ -69,7 +68,7 @@ st.write("## Análise geral dos cancelamentos")
 
 st.write(
     """
-    Nesta etapa, analisamos a quantidade de clientes em cada situação de cancelamento e sua representatividade em relação ao total da base
+    Analisamos a quantidade de clientes em cada situação de cancelamento e sua representatividade em relação ao total da base
     """
 )
 
@@ -95,7 +94,7 @@ st.write("## Análise dos fatores associados ao cancelamento")
 
 st.write(
     """
-    Nesta etapa, analisamos diferentes características dos clientes
+    Analisamos diferentes características dos clientes
     para identificar padrões associados ao cancelamento.
     
     Os gráficos abaixo permitem comparar o comportamento dos clientes
@@ -355,7 +354,7 @@ st.write(
 st.write("### Recomendação")
 
 st.write(
-    "Criar ações preventivas de cobrança e relacionamento antes que o cliente "
+    "Criar ações preventivas de relacionamento antes que o cliente "
     "atinja 21 dias de atraso, priorizando lembretes de pagamento, contatos "
     "proativos e alternativas para regularização da situação."
 )
