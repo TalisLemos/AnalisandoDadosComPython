@@ -68,7 +68,7 @@ st.write("## Análise geral dos cancelamentos")
 
 st.write(
     """
-    Analisamos a quantidade de clientes em cada situação de cancelamento e sua representatividade em relação ao total da base
+    Analisamos a quantidade de clientes em cada situação de cancelamento e sua representatividade em relação ao total da base.
     """
 )
 
@@ -196,10 +196,10 @@ st.plotly_chart(grafico_contratos)
 st.write("### O que os dados indicam?")
 
 st.write(
-    f"Na base analisada, clientes com contrato mensal apresentam uma taxa de cancelamento de "
-    f"de {cancelamento_mensal:.2f}%, enquanto os contratos trimestrais "
-    f"apresentam {cancelamento_trimestral:.2f}% e os contratos anuais "
-    f"apresentam {cancelamento_anual:.2f}%."
+    f"Na base analisada, clientes com contrato mensal apresentam uma taxa de "
+    f"cancelamento de {cancelamento_mensal:.2f}%, enquanto os contratos "
+    f"trimestrais apresentam {cancelamento_trimestral:.2f}% e os contratos "
+    f"anuais apresentam {cancelamento_anual:.2f}%."
 )
 
 
