@@ -223,6 +223,10 @@ st.write("### 2. Dias de atraso no pagamento")
 
 # Agrupar clientes por faixa de atraso
 
+planilha["faixa_atraso"] = planilha["dias_atraso"].apply(
+    lambda x: "Até 20 dias" if x <= 20 else "21 dias ou mais"
+)
+
 atrasos = (
     planilha
     .groupby("faixa_atraso")["cancelou"]
