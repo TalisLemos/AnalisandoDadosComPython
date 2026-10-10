@@ -18,8 +18,8 @@ ALERTA_ATRASO = 15     # gatilho de alerta (antes do corte)
 MOSTRAR_ORIGEM = True  # linha "origem do projeto" no rodapé
 
 AUTORA = "Talita Lemos"
-APRESENTACAO_AUTORA = "Publicitária com 10 anos de experiência em CRM, growth e experiência do cliente"
-LINKEDIN_URL = ""  # cole aqui o link do seu LinkedIn (opcional)
+APRESENTACAO_AUTORA = "Publicitária com mais de 10 anos de experiência em CRM, growth e experiência do cliente"
+LINKEDIN_URL = "www.linkedin.com/in/talitalemos"
 
 MAPA_CONTRATO = {"Monthly": "Mensal", "Quarterly": "Trimestral", "Annual": "Anual"}
 ORDEM_CONTRATO = ["Mensal", "Trimestral", "Anual"]
