@@ -2,7 +2,8 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 
-st.set_page_config(page_title="Churn: sinais que antecipam o cancelamento", layout="wide")
+st.set_page_config(page_title="Churn: sinais que antecipam o cancelamento", layout="wide",
+                   initial_sidebar_state="collapsed")
 
 # =========================================================
 # CONFIGURAÇÃO (ajuste aqui os cortes e as políticas)
@@ -15,6 +16,10 @@ ALERTA_LIGACOES = 3    # gatilho de alerta (antes do corte)
 ALERTA_ATRASO = 15     # gatilho de alerta (antes do corte)
 
 MOSTRAR_ORIGEM = True  # linha "origem do projeto" no rodapé
+
+AUTORA = "Talita Lemos"
+APRESENTACAO_AUTORA = "Publicitária com 10 anos de experiência em CRM, growth e experiência do cliente"
+LINKEDIN_URL = ""  # cole aqui o link do seu LinkedIn (opcional)
 
 MAPA_CONTRATO = {"Monthly": "Mensal", "Quarterly": "Trimestral", "Annual": "Anual"}
 ORDEM_CONTRATO = ["Mensal", "Trimestral", "Anual"]
@@ -134,7 +139,12 @@ def regra_alerta(df, lim_lig, lim_atr):
 # =========================================================
 df, removidos = carregar_dados()
 
-st.sidebar.header("Filtros")
+st.sidebar.header("Filtrar por perfil")
+st.sidebar.caption(
+    "Opcional. Quer ver a análise de um grupo específico de clientes "
+    "(por exemplo, só contratos mensais)? Escolha aqui e a página inteira "
+    "se atualiza. Sem filtros, você vê a base completa."
+)
 opcoes_contrato = sorted(
     df["contrato"].unique(),
     key=lambda c: ORDEM_CONTRATO.index(c) if c in ORDEM_CONTRATO else 99,
@@ -159,6 +169,9 @@ if dff["cancelou"].sum() == 0:
     st.info("Não há cancelamentos neste recorte. Ajuste os filtros na barra lateral.")
     st.stop()
 
+if len(dff) < len(df):
+    st.sidebar.success(f"Mostrando {fmt_int(len(dff))} de {fmt_int(len(df))} clientes")
+
 total = len(dff)
 cancelados = int(dff["cancelou"].sum())
 taxa_geral = cancelados / total * 100
@@ -172,6 +185,31 @@ em_alerta_padrao = int(
 # =========================================================
 st.title("Dá para antecipar o cancelamento: 3 sinais concentram a saída de clientes")
 st.caption("Análise de churn com Python · Case de CRM e retenção")
+
+autoria = f"Por **{AUTORA}** · {APRESENTACAO_AUTORA}"
+if LINKEDIN_URL:
+    autoria += f" · [LinkedIn]({LINKEDIN_URL})"
+st.markdown(autoria)
+
+with st.container(border=True):
+    st.markdown("#### Sobre este projeto")
+    st.markdown(
+        f"- **O que é:** um case de análise de dados sobre cancelamento de clientes "
+        f"(churn) em uma empresa de serviço por assinatura, com {fmt_int(len(df))} "
+        f"clientes na base.\n"
+        "- **A pergunta:** quem cancela, o que acontece antes disso e dá para agir "
+        "a tempo de reter?\n"
+        "- **O que você vai ver, em cerca de 2 minutos:** os perfis de maior risco, "
+        "os sinais que antecedem o cancelamento e uma régua de alerta com plano de ação.\n"
+        "- **Como usar:** role a página. Os gráficos mostram detalhes ao passar o "
+        "mouse, e o simulador da seção 3 permite testar regras de alerta."
+    )
+
+if len(dff) < len(df):
+    st.warning(
+        f"Filtro ativo: mostrando {fmt_int(len(dff))} de {fmt_int(len(df))} clientes. "
+        "Para ver a base completa, limpe os filtros na barra lateral."
+    )
 
 k1, k2, k3, k4 = st.columns([1, 1, 1, 1])
 k1.metric("Clientes analisados", fmt_int(total))
@@ -202,27 +240,38 @@ st.info(
 st.header("1. O risco se concentra em poucos perfis")
 
 seg = tabela_segmentos(dff)
-fig_seg = px.scatter(
-    seg, x="taxa", y="clientes", size="cancelados", color="grupo", text="segmento",
-    hover_name="segmento", size_max=55,
-    hover_data={"grupo": False, "taxa": ":.1f", "clientes": True,
-                "cancelados": True, "peso_no_churn": ":.1f"},
-    labels={"taxa": "Taxa de cancelamento (%)", "clientes": "Clientes no segmento",
-            "cancelados": "Cancelados", "peso_no_churn": "% das saídas",
-            "grupo": "Tipo de segmento"},
+seg["posicao"] = seg["taxa"].apply(
+    lambda t: "Acima da média" if t > taxa_geral else "Abaixo da média"
 )
-fig_seg.update_traces(textposition="top center")
+seg["rotulo"] = seg.apply(
+    lambda r: f"{r['taxa']:.0f}% · {fmt_int(r['clientes'])} clientes", axis=1
+)
+seg_plot = seg.sort_values("taxa")
+
+fig_seg = px.bar(
+    seg_plot, x="taxa", y="segmento", orientation="h", color="posicao", text="rotulo",
+    color_discrete_map={"Acima da média": COR_RISCO, "Abaixo da média": COR_OK},
+    hover_data={"rotulo": False, "posicao": False, "taxa": ":.1f", "clientes": True,
+                "cancelados": True, "peso_no_churn": ":.1f"},
+    labels={"taxa": "Taxa de cancelamento (%)", "segmento": "", "clientes": "Clientes",
+            "cancelados": "Cancelados", "peso_no_churn": "% das saídas"},
+)
+fig_seg.update_traces(textposition="outside", cliponaxis=False)
 fig_seg.add_vline(x=taxa_geral, line_dash="dot", line_color="gray",
-                  annotation_text="média geral", annotation_position="bottom right")
-fig_seg.update_layout(xaxis_range=[0, 110], height=430, margin=dict(t=20))
+                  annotation_text=f"média geral ({taxa_geral:.0f}%)",
+                  annotation_position="top")
+fig_seg.update_layout(
+    xaxis_range=[0, 128], legend_title_text="", height=max(320, 42 * len(seg_plot)),
+    margin=dict(t=40),
+)
 st.plotly_chart(fig_seg, use_container_width=True)
 
 topo = seg.loc[seg["peso_no_churn"].idxmax()]
 st.markdown(
-    f"**{topo['segmento']}** é o segmento que mais pesa: cancela "
-    f"{pct(topo['taxa'])} e responde por {pct(topo['peso_no_churn'])} das saídas. "
-    f"Quanto mais à direita e mais acima, maior o risco e o volume. "
-    f"*(Os segmentos se sobrepõem: um mesmo cliente aparece em mais de um.)*"
+    f"Cada barra compara um perfil de clientes com a média geral. "
+    f"**{topo['segmento']}** é o que mais pesa: {pct(topo['taxa'])} cancelam e "
+    f"esse perfil responde por {pct(topo['peso_no_churn'])} das saídas. "
+    f"*(Um mesmo cliente pode aparecer em mais de um perfil.)*"
 )
 
 # =========================================================
