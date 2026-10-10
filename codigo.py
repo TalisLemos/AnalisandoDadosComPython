@@ -2,8 +2,7 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 
-st.set_page_config(page_title="Churn: sinais que antecipam o cancelamento", layout="wide",
-                   initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Churn: sinais que antecipam o cancelamento", layout="wide")
 
 # =========================================================
 # CONFIGURAÇÃO (ajuste aqui os cortes e as políticas)
@@ -18,8 +17,8 @@ ALERTA_ATRASO = 15     # gatilho de alerta (antes do corte)
 MOSTRAR_ORIGEM = True  # linha "origem do projeto" no rodapé
 
 AUTORA = "Talita Lemos"
-APRESENTACAO_AUTORA = "Publicitária com mais de 10 anos de experiência em CRM, growth e experiência do cliente"
-LINKEDIN_URL = "www.linkedin.com/in/talitalemos"
+APRESENTACAO_AUTORA = "Publicitária com 10 anos de experiência em CRM, growth e experiência do cliente"
+LINKEDIN_URL = ""  # cole aqui o link do seu LinkedIn (opcional)
 
 MAPA_CONTRATO = {"Monthly": "Mensal", "Quarterly": "Trimestral", "Annual": "Anual"}
 ORDEM_CONTRATO = ["Mensal", "Trimestral", "Anual"]
@@ -135,42 +134,10 @@ def regra_alerta(df, lim_lig, lim_atr):
 
 
 # =========================================================
-# DADOS E FILTROS
+# DADOS
 # =========================================================
 df, removidos = carregar_dados()
-
-st.sidebar.header("Filtrar por perfil")
-st.sidebar.caption(
-    "Opcional. Quer ver a análise de um grupo específico de clientes "
-    "(por exemplo, só contratos mensais)? Escolha aqui e a página inteira "
-    "se atualiza. Sem filtros, você vê a base completa."
-)
-opcoes_contrato = sorted(
-    df["contrato"].unique(),
-    key=lambda c: ORDEM_CONTRATO.index(c) if c in ORDEM_CONTRATO else 99,
-)
-f_contrato = st.sidebar.multiselect("Tipo de contrato", opcoes_contrato,
-                                    default=opcoes_contrato)
-opcoes_sexo = sorted(df["sexo"].unique())
-f_sexo = st.sidebar.multiselect("Sexo", opcoes_sexo, default=opcoes_sexo)
-idade_min, idade_max = int(df["idade"].min()), int(df["idade"].max())
-f_idade = st.sidebar.slider("Idade", idade_min, idade_max, (idade_min, idade_max))
-
-dff = df[
-    df["contrato"].isin(f_contrato)
-    & df["sexo"].isin(f_sexo)
-    & df["idade"].between(f_idade[0], f_idade[1])
-]
-
-if dff.empty:
-    st.warning("Nenhum cliente com esses filtros. Ajuste a barra lateral.")
-    st.stop()
-if dff["cancelou"].sum() == 0:
-    st.info("Não há cancelamentos neste recorte. Ajuste os filtros na barra lateral.")
-    st.stop()
-
-if len(dff) < len(df):
-    st.sidebar.success(f"Mostrando {fmt_int(len(dff))} de {fmt_int(len(df))} clientes")
+dff = df  # base completa
 
 total = len(dff)
 cancelados = int(dff["cancelou"].sum())
@@ -181,10 +148,10 @@ em_alerta_padrao = int(
 )
 
 # =========================================================
-# TOPO: RESUMO EM 30 SEGUNDOS
+# APRESENTAÇÃO DO CASE
 # =========================================================
-st.title("Dá para antecipar o cancelamento: 3 sinais concentram a saída de clientes")
-st.caption("Análise de churn com Python · Case de CRM e retenção")
+st.title("Análise de Churn: como antecipar o cancelamento de clientes")
+st.caption("Case de análise de dados com Python · CRM e retenção")
 
 autoria = f"Por **{AUTORA}** · {APRESENTACAO_AUTORA}"
 if LINKEDIN_URL:
@@ -192,24 +159,36 @@ if LINKEDIN_URL:
 st.markdown(autoria)
 
 with st.container(border=True):
-    st.markdown("#### Sobre este projeto")
-    st.markdown(
-        f"- **O que é:** um case de análise de dados sobre cancelamento de clientes "
-        f"(churn) em uma empresa de serviço por assinatura, com {fmt_int(len(df))} "
-        f"clientes na base.\n"
-        "- **A pergunta:** quem cancela, o que acontece antes disso e dá para agir "
-        "a tempo de reter?\n"
-        "- **O que você vai ver, em cerca de 2 minutos:** os perfis de maior risco, "
-        "os sinais que antecedem o cancelamento e uma régua de alerta com plano de ação.\n"
-        "- **Como usar:** role a página. Os gráficos mostram detalhes ao passar o "
-        "mouse, e o simulador da seção 3 permite testar regras de alerta."
+    st.markdown("##### O case")
+    st.write(
+        f"Uma empresa de serviço por assinatura percebeu que boa parte da sua base "
+        f"de clientes já cancelou. Este projeto analisa os dados de "
+        f"{fmt_int(len(df))} clientes para entender o que está por trás desses "
+        f"cancelamentos."
+    )
+    st.markdown("##### O objetivo")
+    st.write(
+        "Entender quais perfis de cliente mais cancelam e o que acontece antes da saída."
+    )
+    st.markdown("##### A proposta")
+    st.write(
+        "Criar uma **régua de alerta de retenção**: um conjunto de gatilhos simples "
+        "que sinaliza, antes do cancelamento, os clientes em risco e dispara uma "
+        "ação para cada caso. Hoje, no cenário do case, o cancelamento só é "
+        "percebido depois que acontece. Este projeto mostra por que essa régua vale "
+        "a pena e como ela funcionaria."
+    )
+    st.markdown("##### Como ler")
+    st.write(
+        "Role a página, em cerca de 2 minutos: as seções 1 e 2 trazem o diagnóstico "
+        "e a seção 3 apresenta a proposta. Passe o mouse sobre os gráficos para ver "
+        "os detalhes."
     )
 
-if len(dff) < len(df):
-    st.warning(
-        f"Filtro ativo: mostrando {fmt_int(len(dff))} de {fmt_int(len(df))} clientes. "
-        "Para ver a base completa, limpe os filtros na barra lateral."
-    )
+# =========================================================
+# RESULTADO EM 30 SEGUNDOS
+# =========================================================
+st.header("O resultado em 30 segundos")
 
 k1, k2, k3, k4 = st.columns([1, 1, 1, 1])
 k1.metric("Clientes analisados", fmt_int(total))
@@ -228,16 +207,26 @@ with k4:
     )
     st.plotly_chart(fig_rosca, use_container_width=True)
 
-st.info(
-    "**O cancelamento não acontece de surpresa.** Contrato mensal, excesso de "
-    "contatos com o call center e atraso no pagamento concentram a saída, e uma "
-    "régua de alerta simples identifica esses clientes antes de eles irem embora."
-)
+d1, d2 = st.columns(2)
+with d1:
+    st.markdown("##### O que a análise mostra")
+    st.info(
+        "O cancelamento não acontece de surpresa. Contrato mensal, excesso de "
+        "contatos com o call center e atraso no pagamento concentram a saída, e "
+        "esses sinais aparecem antes de o cliente ir embora."
+    )
+with d2:
+    st.markdown("##### O que eu proponho")
+    st.success(
+        "Implementar uma régua de alerta de retenção: monitorar ligações ao call "
+        "center e dias de atraso e agir antes do ponto de virada, com uma ação "
+        "específica para cada gatilho."
+    )
 
 # =========================================================
 # 1. QUEM SAI
 # =========================================================
-st.header("1. O risco se concentra em poucos perfis")
+st.header("1. Diagnóstico: o risco se concentra em poucos perfis")
 
 seg = tabela_segmentos(dff)
 seg["posicao"] = seg["taxa"].apply(
@@ -277,7 +266,7 @@ st.markdown(
 # =========================================================
 # 2. SINAIS
 # =========================================================
-st.header("2. Os sinais aparecem antes do cancelamento")
+st.header("2. Diagnóstico: os sinais aparecem antes do cancelamento")
 
 c_lig, c_atr = st.columns(2)
 
@@ -326,14 +315,42 @@ with c_atr:
     )
 
 st.markdown(
-    "São sinais que a empresa já registra e pode monitorar. O ponto de virada "
-    "vem antes do corte: no alerta ainda há tempo de agir."
+    "**O que isso significa:** os sinais aparecem antes da saída e a empresa já "
+    "registra esses dados, mas sem uma regra que os monitore eles passam "
+    "despercebidos. O ponto de virada vem antes do corte: no alerta ainda há tempo "
+    "de agir. É aí que entra a proposta da próxima seção."
 )
 
 # =========================================================
 # 3. PLANO: SIMULADOR DA RÉGUA
 # =========================================================
-st.header("3. Uma régua de alerta simples para agir antes")
+st.header("3. A proposta: implementar uma régua de alerta de retenção")
+st.write(
+    "Hoje o cancelamento só é percebido depois que acontece. A proposta é criar "
+    "uma régua de alerta: a empresa passa a monitorar automaticamente os sinais "
+    "que antecedem a saída e a agir sobre os clientes em risco, enquanto ainda "
+    "há relação a preservar."
+)
+
+st.markdown("##### Como funcionaria")
+p1, p2, p3 = st.columns(3)
+with p1:
+    with st.container(border=True):
+        st.markdown("**1. Monitorar**")
+        st.write("O CRM acompanha, para cada cliente, o número de ligações ao "
+                 "call center e os dias de atraso.")
+with p2:
+    with st.container(border=True):
+        st.markdown("**2. Agir**")
+        st.write("Ao atingir um gatilho, o cliente recebe uma ação específica, "
+                 "antes do ponto em que o cancelamento dispara.")
+with p3:
+    with st.container(border=True):
+        st.markdown("**3. Medir**")
+        st.write("Compara-se a retenção de quem recebeu a ação com um grupo de "
+                 "controle, para ajustar o que funciona.")
+
+st.markdown("##### Teste a régua proposta")
 st.write(
     "Mova os controles para testar a regra: o painel mostra quantas saídas ela "
     "teria captado e quantos clientes ativos exigiriam ação."
@@ -392,6 +409,7 @@ if pd.notna(gm_baixo) and pd.notna(gm_alto) and gm_baixo > gm_alto:
         "Métrica de sucesso": "Aumento do gasto médio",
     })
 
+st.markdown("##### Plano de ação proposto")
 st.table(pd.DataFrame(plano).set_index("Gatilho"))
 
 st.markdown(
@@ -413,11 +431,17 @@ st.download_button(
 # =========================================================
 # CONCLUSÃO
 # =========================================================
-st.header("Conclusão")
+st.header("Conclusão e próximos passos")
 st.write(
     "Os clientes avisam antes de sair. Com poucos gatilhos monitorados, é possível "
     "agir enquanto a relação ainda está ativa, priorizando quem tem mais risco e "
-    "mais volume."
+    "mais volume. A régua proposta transforma a análise em rotina de retenção."
+)
+st.markdown(
+    "**Próximos passos para implementar:**\n"
+    "1. Validar os gatilhos com os dados reais da empresa e ajustar os cortes.\n"
+    "2. Rodar um piloto de 90 dias com grupo de controle.\n"
+    "3. Medir retenção, custo da ação e retorno, e ampliar o que funcionar."
 )
 
 # =========================================================
@@ -479,7 +503,10 @@ with st.expander("Sobre esta análise"):
         "tratar clientes de forma diferente.\n"
         "- **Total gasto:** é em parte consequência do cancelamento (quem sai cedo "
         "gasta menos), por isso o app usa o gasto médio por período como cliente.\n"
+        "- **Premissa do case:** considera-se que a empresa ainda não monitora esses "
+        "sinais de forma sistemática; a régua é uma proposta, ainda não testada na prática.\n"
         "- **Ferramentas:** Python, Pandas, Plotly e Streamlit.\n"
+        "- **Última atualização:** outubro de 2026.\n"
     )
     if MOSTRAR_ORIGEM:
         texto += (
