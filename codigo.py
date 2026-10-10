@@ -143,58 +143,58 @@ total = len(dff)
 cancelados = int(dff["cancelou"].sum())
 taxa_geral = cancelados / total * 100
 ativos = dff[dff["cancelou"] == 0]
-em_alerta_padrao = int(
-    (regra_alerta(ativos, ALERTA_LIGACOES, ALERTA_ATRASO)).sum()
-)
 
 # =========================================================
-# APRESENTAÇÃO DO CASE
+# ABERTURA
 # =========================================================
-st.title("Análise de Churn: como antecipar o cancelamento de clientes")
-st.caption("Case de análise de dados com Python · CRM e retenção")
+st.title("Por que os clientes cancelam, e dá para agir antes?")
+st.caption("Análise de churn · Case de dados com Python · CRM e retenção")
 
 autoria = f"Por **{AUTORA}** · {APRESENTACAO_AUTORA}"
 if LINKEDIN_URL:
     autoria += f" · [LinkedIn]({LINKEDIN_URL})"
 st.markdown(autoria)
 
-with st.container(border=True):
-    st.markdown("##### O case")
+with st.expander("Sobre o case"):
     st.write(
-        f"Uma empresa de serviço por assinatura percebeu que boa parte da sua base "
-        f"de clientes já cancelou. Este projeto analisa os dados de "
-        f"{fmt_int(len(df))} clientes para entender o que está por trás desses "
-        f"cancelamentos."
+        f"Uma empresa de serviço por assinatura, com {fmt_int(len(df))} clientes na "
+        f"base, percebeu que boa parte deles já cancelou. Este case usa os dados "
+        f"dessa base para investigar o que está por trás dos cancelamentos."
     )
-    st.markdown("##### O objetivo")
+with st.expander("Qual é o objetivo"):
     st.write(
-        "Entender quais perfis de cliente mais cancelam e o que acontece antes da saída."
+        "Entender por que os clientes cancelam e, com base nisso, propor uma forma "
+        "de agir antes da saída."
     )
-    st.markdown("##### A proposta")
+with st.expander("Como ler esta página"):
     st.write(
-        "Criar uma **régua de alerta de retenção**: um conjunto de gatilhos simples "
-        "que sinaliza, antes do cancelamento, os clientes em risco e dispara uma "
-        "ação para cada caso. Hoje, no cenário do case, o cancelamento só é "
-        "percebido depois que acontece. Este projeto mostra por que essa régua vale "
-        "a pena e como ela funcionaria."
+        "Role a página, em cerca de 2 minutos. A história tem quatro partes: o "
+        "problema, quem está indo embora, o que acontece antes da saída e a "
+        "proposta. Passe o mouse sobre os gráficos para ver os detalhes."
     )
-    st.markdown("##### Como ler")
-    st.write(
-        "Role a página, em cerca de 2 minutos: as seções 1 e 2 trazem o diagnóstico "
-        "e a seção 3 apresenta a proposta. Passe o mouse sobre os gráficos para ver "
-        "os detalhes."
+with st.expander("Só quer o resumo? Conclusões em poucas linhas"):
+    st.markdown(
+        "- **Diagnóstico:** o cancelamento tem padrão. Ele se concentra em perfis "
+        "específicos e é precedido por sinais claros: muitas ligações ao call "
+        "center e atraso no pagamento.\n"
+        "- **Proposta:** implementar uma régua de alerta de retenção, que monitora "
+        "esses sinais e dispara uma ação para cada gatilho, antes de o cliente sair."
     )
 
 # =========================================================
-# RESULTADO EM 30 SEGUNDOS
+# 1. O PROBLEMA
 # =========================================================
-st.header("O resultado em 30 segundos")
+st.header("1. O problema: clientes estão indo embora")
+st.write(
+    f"Imagine uma empresa de serviço por assinatura com **{fmt_int(total)} clientes**. "
+    f"Ao olhar a base, o time percebe algo preocupante: "
+    f"**{taxa_geral:.0f}% deles já cancelou.**"
+)
 
 k1, k2, k3, k4 = st.columns([1, 1, 1, 1])
-k1.metric("Clientes analisados", fmt_int(total))
+k1.metric("Clientes na base", fmt_int(total))
 k2.metric("Já cancelaram", f"{taxa_geral:.1f}%", help=f"{fmt_int(cancelados)} clientes")
-k3.metric("Ativos já em zona de alerta", fmt_int(em_alerta_padrao),
-          help=f"{ALERTA_LIGACOES}+ ligações ou {ALERTA_ATRASO}+ dias de atraso")
+k3.metric("Seguem ativos", fmt_int(len(ativos)))
 with k4:
     fig_rosca = px.pie(dff, names="situacao", hole=0.68, color="situacao",
                        color_discrete_map=CORES)
@@ -207,26 +207,20 @@ with k4:
     )
     st.plotly_chart(fig_rosca, use_container_width=True)
 
-d1, d2 = st.columns(2)
-with d1:
-    st.markdown("##### O que a análise mostra")
-    st.info(
-        "O cancelamento não acontece de surpresa. Contrato mensal, excesso de "
-        "contatos com o call center e atraso no pagamento concentram a saída, e "
-        "esses sinais aparecem antes de o cliente ir embora."
-    )
-with d2:
-    st.markdown("##### O que eu proponho")
-    st.success(
-        "Implementar uma régua de alerta de retenção: monitorar ligações ao call "
-        "center e dias de atraso e agir antes do ponto de virada, com uma ação "
-        "específica para cada gatilho."
-    )
+st.markdown(
+    "> Cada cancelamento é uma receita que deixa de entrar. Antes de pensar em "
+    "soluções, vale entender: **quem são** os clientes que saem e **o que "
+    "aconteceu** antes de eles irem embora?"
+)
 
 # =========================================================
-# 1. QUEM SAI
+# 2. QUEM ESTÁ INDO EMBORA
 # =========================================================
-st.header("1. Diagnóstico: o risco se concentra em poucos perfis")
+st.header("2. Quem está indo embora?")
+st.write(
+    "Para começar, comparei grupos de clientes com a média geral. Quanto mais "
+    "longa a barra, maior a chance de cancelamento."
+)
 
 seg = tabela_segmentos(dff)
 seg["posicao"] = seg["taxa"].apply(
@@ -257,16 +251,25 @@ st.plotly_chart(fig_seg, use_container_width=True)
 
 topo = seg.loc[seg["peso_no_churn"].idxmax()]
 st.markdown(
-    f"Cada barra compara um perfil de clientes com a média geral. "
-    f"**{topo['segmento']}** é o que mais pesa: {pct(topo['taxa'])} cancelam e "
-    f"esse perfil responde por {pct(topo['peso_no_churn'])} das saídas. "
+    f"**{topo['segmento']}** é o perfil que mais pesa: {pct(topo['taxa'])} cancelam "
+    f"e ele responde por {pct(topo['peso_no_churn'])} das saídas. "
     f"*(Um mesmo cliente pode aparecer em mais de um perfil.)*"
 )
 
+st.markdown(
+    "> Isso mostra **quem** tende a sair. Falta entender **quando**: existe algum "
+    "sinal antes da decisão de cancelar?"
+)
+
 # =========================================================
-# 2. SINAIS
+# 3. O QUE ACONTECE ANTES DA SAÍDA
 # =========================================================
-st.header("2. Diagnóstico: os sinais aparecem antes do cancelamento")
+st.header("3. O que acontece antes da saída?")
+st.write(
+    "Olhei dois comportamentos que a empresa já registra: quantas vezes o cliente "
+    "liga para o call center e quantos dias ele atrasa o pagamento. O gráfico "
+    "mostra a taxa de cancelamento em cada nível."
+)
 
 c_lig, c_atr = st.columns(2)
 
@@ -276,19 +279,18 @@ with c_lig:
     st.plotly_chart(
         grafico_linha(
             t_lig, "ligacoes_callcenter", "Número de ligações",
-            [(ALERTA_LIGACOES, "alerta", "gray", "top left"),
-             (LIMITE_LIGACOES, "dispara", COR_RISCO, "top right")],
+            [(LIMITE_LIGACOES, "ponto de virada", COR_RISCO, "top left")],
         ),
         use_container_width=True,
     )
     t_lig_faixa = taxa_por_grupo(
         dff.assign(f=dff["ligacoes_callcenter"].ge(LIMITE_LIGACOES)), "f"
     )
-    alto = valor(t_lig_faixa, "f", True)
-    baixo = valor(t_lig_faixa, "f", False)
+    lig_alto = valor(t_lig_faixa, "f", True)
+    lig_baixo = valor(t_lig_faixa, "f", False)
     st.markdown(
-        f"Com **{LIMITE_LIGACOES} ligações ou mais**, {pct(alto)} cancelam. "
-        f"Abaixo disso, {pct(baixo)}."
+        f"Com **{LIMITE_LIGACOES} ligações ou mais**, {pct(lig_alto)} cancelam. "
+        f"Abaixo disso, {pct(lig_baixo)}."
     )
 
 with c_atr:
@@ -299,32 +301,37 @@ with c_atr:
     st.plotly_chart(
         grafico_linha(
             t_atr, "inicio", "Dias de atraso (faixas de 5 dias)",
-            [(ALERTA_ATRASO, "alerta", "gray", "top left"),
-             (LIMITE_ATRASO, "dispara", COR_RISCO, "top right")],
+            [(LIMITE_ATRASO, "ponto de virada", COR_RISCO, "top left")],
         ),
         use_container_width=True,
     )
     t_atr_faixa = taxa_por_grupo(
         dff.assign(f=dff["dias_atraso"].ge(LIMITE_ATRASO)), "f"
     )
-    alto = valor(t_atr_faixa, "f", True)
-    baixo = valor(t_atr_faixa, "f", False)
+    atr_alto = valor(t_atr_faixa, "f", True)
+    atr_baixo = valor(t_atr_faixa, "f", False)
     st.markdown(
-        f"Com **{LIMITE_ATRASO} dias ou mais** de atraso, {pct(alto)} cancelam. "
-        f"Abaixo disso, {pct(baixo)}."
+        f"Com **{LIMITE_ATRASO} dias ou mais** de atraso, {pct(atr_alto)} cancelam. "
+        f"Abaixo disso, {pct(atr_baixo)}."
     )
 
+st.markdown("##### Fechando o diagnóstico")
+st.info(
+    f"- O cancelamento se concentra em perfis específicos, como "
+    f"**{topo['segmento'].lower()}**.\n"
+    f"- Existe um ponto de virada claro: a partir de {LIMITE_LIGACOES} ligações "
+    f"ou {LIMITE_ATRASO} dias de atraso, o cancelamento dispara.\n"
+    f"- Esses sinais aparecem **antes** da saída e já estão nos dados da empresa."
+)
+
 st.markdown(
-    "**O que isso significa:** os sinais aparecem antes da saída e a empresa já "
-    "registra esses dados, mas sem uma regra que os monitore eles passam "
-    "despercebidos. O ponto de virada vem antes do corte: no alerta ainda há tempo "
-    "de agir. É aí que entra a proposta da próxima seção."
+    "> A pergunta passa a ser: **o que fazer com esses sinais?**"
 )
 
 # =========================================================
 # 3. PLANO: SIMULADOR DA RÉGUA
 # =========================================================
-st.header("3. A proposta: implementar uma régua de alerta de retenção")
+st.header("4. A proposta: implementar uma régua de alerta de retenção")
 st.write(
     "Hoje o cancelamento só é percebido depois que acontece. A proposta é criar "
     "uma régua de alerta: a empresa passa a monitorar automaticamente os sinais "
