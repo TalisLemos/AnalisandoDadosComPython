@@ -110,10 +110,7 @@ with st.expander("Como ler esta página"):
 
 with st.expander("Só quer o resumo? Conclusões em poucas linhas"):
     st.markdown(
-    "- **Diagnóstico:** Quatro situações (6 ou mais ligações ao call center, contrato mensal, 21 dias ou mais de atraso e 51 anos ou mais) explicam 86,5% dos cancelamentos, e todos os clientes que passaram por elas cancelaram. \n"
-    "- **Situação atual:** Os 20.988 clientes ativos ainda não cruzaram nenhuma delas, e 9.721 já estão a poucas ligações ou poucos dias de distância. \n"
-    "- **Proposta:** Evitar o contrato mensal na venda, priorizar o contato com os clientes mais próximos da linha por meio de uma régua de alerta em dois níveis e pesquisar os motivos de quem sai mais. \n"
-    )
+    "(em breve)")
 
 #Passo 5: O problema (entender quantos clientes cancelaram)
     #Total de clientes, % que cancelou, quantos seguem ativos
