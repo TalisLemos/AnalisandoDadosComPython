@@ -1,515 +1,479 @@
+#Passo a passo do projeto
+#Passo 1: Abrir a base de dados (importar)
+#Passo 2: Visualizar a base de dados
+#Passo 3: Corrigir os problemas da base de dados (tratamento de dados)
+#Passo 4: Abertura da pagina (apresentar o case)
+#Passo 5: O problema (entender quantos clientes cancelaram)
+#Passo 6: Quem esta indo embora (perfil)
+#Passo 7: O que acontece antes da saida (comportamento)
+#Passo 8: A proposta (agir antes de o cliente sair)
+#Passo 9: Simulador da regua (opcional, so depois que o resto estiver pronto)
+#Passo 10: Conclusao e proximos passos
+#Passo 11: Sobre a analise (rodape)
+
+########################################33333
+
+#Passo a passo do projeto
+#Passo 1: Abrir a base de dados (importar)
+    #import pandas, streamlit e plotly.express
 import pandas as pd
 import streamlit as st
 import plotly.express as px
 
-st.set_page_config(page_title="Churn: sinais que antecipam o cancelamento", layout="wide")
+    #pd.read_csv("cancelamentos.csv")
+planilha = pd.read_csv("cancelamentos.csv")
 
-# =========================================================
-# CONFIGURAÇÃO (ajuste aqui os cortes e as políticas)
-# =========================================================
-LIMITE_LIGACOES = 4    # a partir daqui o cancelamento dispara
-LIMITE_ATRASO = 21     # dias de atraso em que o cancelamento dispara
-LIMITE_IDADE = 51      # idade a partir da qual o cancelamento dispara
-
-ALERTA_LIGACOES = 3    # gatilho de alerta (antes do corte)
-ALERTA_ATRASO = 15     # gatilho de alerta (antes do corte)
-
-MOSTRAR_ORIGEM = True  # linha "origem do projeto" no rodapé
-
-AUTORA = "Talita Lemos"
-APRESENTACAO_AUTORA = "Publicitária com 10 anos de experiência em CRM, growth e experiência do cliente"
-LINKEDIN_URL = ""  # cole aqui o link do seu LinkedIn (opcional)
-
-MAPA_CONTRATO = {"Monthly": "Mensal", "Quarterly": "Trimestral", "Annual": "Anual"}
-ORDEM_CONTRATO = ["Mensal", "Trimestral", "Anual"]
-NOMES_QUARTIS = ["1º quartil (menor gasto)", "2º quartil", "3º quartil",
-                 "4º quartil (maior gasto)"]
-
-COR_RISCO = "#E4572E"
-COR_OK = "#2E86AB"
-CORES = {"Ficou": COR_OK, "Cancelou": COR_RISCO}
-
-ROT_IDADE_BAIXO = f"Até {LIMITE_IDADE - 1} anos"
-ROT_IDADE_ALTO = f"{LIMITE_IDADE} anos ou mais"
-
-NOMES_COLUNAS = {
-    "idade": "Idade",
-    "sexo": "Sexo",
-    "tempo_como_cliente": "Tempo como cliente",
-    "frequencia_uso": "Frequência de uso",
-    "ligacoes_callcenter": "Ligações ao call center",
-    "dias_atraso": "Dias de atraso no pagamento",
-    "assinatura": "Tipo de assinatura",
-    "duracao_contrato": "Duração do contrato",
-    "total_gasto": "Total gasto",
-    "meses_ultima_interacao": "Meses desde a última interação",
-}
+st.set_page_config(page_title= "Análise de churn", layout="wide") #Configuração da pagina // nome e largura
 
 
-# =========================================================
-# FUNÇÕES
-# =========================================================
-@st.cache_data
-def carregar_dados():
-    df = pd.read_csv("cancelamentos.csv")
-    antes = len(df)
-    df = df.dropna().copy()
-    removidos = antes - len(df)
-
-    df["cancelou"] = df["cancelou"].astype(int)  # 0/1 para calcular taxas
-    df["situacao"] = df["cancelou"].map({0: "Ficou", 1: "Cancelou"})
-    df["contrato"] = df["duracao_contrato"].map(MAPA_CONTRATO).fillna(df["duracao_contrato"])
-    df["faixa_idade"] = df["idade"].apply(
-        lambda x: ROT_IDADE_BAIXO if x < LIMITE_IDADE else ROT_IDADE_ALTO
-    )
-
-    # Quartis (o rank evita erro quando há muitos valores repetidos)
-    df["faixa_gasto"] = pd.qcut(
-        df["total_gasto"].rank(method="first"), q=4, labels=NOMES_QUARTIS
-    )
-    # Gasto médio por período como cliente: separa "gasta pouco" de "é cliente novo"
-    df["gasto_medio"] = df["total_gasto"] / df["tempo_como_cliente"].clip(lower=1)
-    df["faixa_gasto_medio"] = pd.qcut(
-        df["gasto_medio"].rank(method="first"), q=4, labels=NOMES_QUARTIS
-    )
-    return df, removidos
+st.info(
+    "**Projeto em desenvolvimento**\n\n"
+    "Este projeto está disponível para consulta como parte do meu portfólio, "
+    "embora ainda não esteja na versão final. As análises e visualizações "
+    "estão sendo aprimoradas, e as recomendações serão incluídas após "
+    "a conclusão e validação do diagnóstico."
+)
 
 
-def fmt_int(n):
-    return f"{int(n):,}".replace(",", ".")
+planilha["duracao_contrato"] = planilha["duracao_contrato"].replace({
+    "Monthly": "Mensal",
+    "Quarterly": "Trimestral",
+    "Annual": "Anual"
+})
+
+planilha["sexo"] = planilha["sexo"].replace({
+    "Female": "Feminino",
+    "Male": "Masculino"
+})
 
 
-def pct(x):
-    return "n/d" if pd.isna(x) else f"{x:.1f}%"
+
+#Passo 2: Visualizar a base de dados
 
 
-def taxa_por_grupo(df, coluna):
-    """Taxa de cancelamento, volume e peso de cada grupo no total de saídas."""
-    tabela = (
-        df.groupby(coluna, observed=True)["cancelou"]
-        .agg(clientes="count", cancelados="sum", taxa="mean")
-        .reset_index()
-    )
-    tabela["taxa"] = tabela["taxa"] * 100
-    tabela["peso_no_churn"] = tabela["cancelados"] / df["cancelou"].sum() * 100
-    return tabela
+#Passo 3: Corrigir os problemas da base de dados (tratamento de dados)
+    #Remover linhas duplicadas (.drop_duplicates())
+    #Remover informacoes vazias (.dropna())
+
+linhas_original = len(planilha) #Guardar quantas linhas a base tinha no inicio
+
+duplicados = planilha["CustomerID"].duplicated().sum() #Verificar quantos clientes aparecem repetidos (pelo ID)
+print(duplicados)
+
+planilha = planilha.drop_duplicates(subset="CustomerID", keep="first") #Remover os repetidos, mantendo a primeira ocorrencia de cada ID
+
+linhas_antes_vazios = len(planilha) #Remover as informacoes vazias e guardar quantas foram
+planilha = planilha.dropna()
+vazios = linhas_antes_vazios - len(planilha)
 
 
-def valor(tabela, coluna, grupo, campo="taxa"):
-    linha = tabela.loc[tabela[coluna] == grupo, campo]
-    return float(linha.iloc[0]) if len(linha) else float("nan")
+planilha = planilha.drop(columns="CustomerID") #retirar a coluna que nao ajuda na analise
+
+#3.6 Conferir o resultado
+print(linhas_original, duplicados, vazios, len(planilha))
+
+    #Transformar cancelou de 0 e 1 em Nao e Sim (para os graficos)
+planilha["cancelou"] = planilha["cancelou"].replace({0: "Não", 1: "Sim"}) # Transformar 0 e 1 em Não e Sim
+
+planilha["situacao"] = planilha["cancelou"].map({"Sim": "Cancelou", "Não": "Não cancelou"}) #Coluna com nomes mais claros para os graficos
+
+planilha.info() #verificar resultado
+
+#Passo 4: Abertura da pagina (apresentar o case)
+    #Titulo com a pergunta do projeto (st.title)
+    #Quem fez (st.markdown)
+    #Sanfonas com st.expander: Sobre o case / Objetivo / Como ler a pagina / Resumo
 
 
-def tabela_segmentos(df):
-    """Segmentos de risco (contrato, idade, gasto médio) numa tabela única."""
-    partes = []
-    for grupo, coluna in [("Contrato", "contrato"), ("Idade", "faixa_idade"),
-                          ("Gasto médio", "faixa_gasto_medio")]:
-        t = taxa_por_grupo(df, coluna)
-        t["segmento"] = grupo + ": " + t[coluna].astype(str)
-        t["grupo"] = grupo
-        partes.append(t[["grupo", "segmento", "clientes", "cancelados",
-                         "taxa", "peso_no_churn"]])
-    return pd.concat(partes, ignore_index=True)
+st.title("Por que os clientes cancelaram? Daria para ter agido antes?")
 
+st.caption("Análise de churn · Case de dados com Python ·  CRM e retenção")
+st.markdown("Por **Talita Lemos** · Publicitária há mais de 10 anos com experiência em CRM, growth e automação · [Linkedin](https://www.linkedin.com/in/talitalemos)" )
 
-def grafico_linha(tabela, x, rotulo_x, marcas):
-    fig = px.line(
-        tabela, x=x, y="taxa", markers=True,
-        hover_data={"clientes": True, "cancelados": True, "taxa": ":.1f"},
-    )
-    fig.update_traces(line_color=COR_RISCO, marker_color=COR_RISCO)
-    for pos, texto, cor, lado in marcas:
-        fig.add_vline(x=pos, line_dash="dash", line_color=cor,
-                      annotation_text=texto, annotation_position=lado)
-    fig.update_layout(
-        xaxis_title=rotulo_x, yaxis_title="% de clientes que cancelaram",
-        yaxis_range=[0, 108], height=340, margin=dict(t=30, b=10),
-    )
-    return fig
-
-
-def regra_alerta(df, lim_lig, lim_atr):
-    return (df["ligacoes_callcenter"] >= lim_lig) | (df["dias_atraso"] >= lim_atr)
-
-
-# =========================================================
-# DADOS
-# =========================================================
-df, removidos = carregar_dados()
-dff = df  # base completa
-
-total = len(dff)
-cancelados = int(dff["cancelou"].sum())
-taxa_geral = cancelados / total * 100
-ativos = dff[dff["cancelou"] == 0]
-
-# =========================================================
-# ABERTURA
-# =========================================================
-st.title("Por que os clientes cancelam, e dá para agir antes?")
-st.caption("Análise de churn · Case de dados com Python · CRM e retenção")
-
-autoria = f"Por **{AUTORA}** · {APRESENTACAO_AUTORA}"
-if LINKEDIN_URL:
-    autoria += f" · [LinkedIn]({LINKEDIN_URL})"
-st.markdown(autoria)
 
 with st.expander("Sobre o case"):
-    st.write(
-        f"Uma empresa que vende serviços por assinatura tem {fmt_int(len(df))} "
-        f"clientes na base e notou que muitos deles já cancelaram. Este case "
-        f"analisa os dados desses clientes para entender por que isso acontece e "
-        f"o que a empresa pode fazer para reduzir os cancelamentos."
-    )
-with st.expander("Qual é o objetivo"):
-    st.write(
-        "Entender por que os clientes cancelam e, com base nisso, propor ações "
-        "para reter os clientes antes da saída."
-    )
+    st.write('''Uma empresa de serviços por assinatura tem 48.527 clientes na base, e 56,7% deles já cancelaram. 
+    Este case analisa os dados para entender o que está por trás dos cancelamentos e propor ações de retenção. 
+    Os dados têm finalidade didática: os padrões são mais extremos do que numa operação real, e servem para ilustrar o método de análise.
+''')
+
+with st.expander("Objetivo"):
+    st.write('''Identificar os principais fatores relacionados ao cancelamento, analisando características, 
+    perfil e comportamento dos clientes. A partir desses insights, propor ações de retenção que possam contribuir 
+    para reduzir a taxa de churn.''')
+
 with st.expander("Como ler esta página"):
-    st.write(
-        "A leitura leva cerca de 2 minutos e segue quatro partes: o problema, o "
-        "tipo de contrato, o que acontece antes da saída e a proposta. Passe o "
-        "mouse sobre os gráficos para ver os detalhes."
-    )
+    st.write('''A leitura leva cerca de 4 minutos. Taxa de cancelamento é a % de clientes de um grupo que cancelaram 
+    até a data da base. Como a base não tem datas, a análise mostra associações, não a evolução no tempo.
+''')
+
+
 with st.expander("Só quer o resumo? Conclusões em poucas linhas"):
     st.markdown(
-        "- **Diagnóstico:** o cancelamento se concentra no contrato mensal e é "
-        "precedido por sinais claros: muitas ligações ao call center e atraso no "
-        "pagamento.\n"
-        "- **Proposta:** a equipe de vendas incentiva a migração para planos "
-        "trimestral ou anual, e o CRM passa a monitorar os sinais de alerta e "
-        "agir antes de o cliente sair."
+    "- **Diagnóstico:** Quatro situações (6 ou mais ligações ao call center, contrato mensal, 21 dias ou mais de atraso e 51 anos ou mais) explicam 86,5% dos cancelamentos, e todos os clientes que passaram por elas cancelaram. \n"
+    "- **Situação atual:** Os 20.988 clientes ativos ainda não cruzaram nenhuma delas, e 9.721 já estão a poucas ligações ou poucos dias de distância. \n"
+    "- **Proposta:** Evitar o contrato mensal na venda, priorizar o contato com os clientes mais próximos da linha por meio de uma régua de alerta em dois níveis e pesquisar os motivos de quem sai mais. \n"
     )
 
-# =========================================================
-# 1. O PROBLEMA
-# =========================================================
-st.header("1. O problema: clientes estão indo embora")
-st.write(
-    f"Imagine uma empresa de serviço por assinatura com **{fmt_int(total)} clientes**. "
-    f"Ao olhar a base, o time percebe algo preocupante: "
-    f"**{taxa_geral:.0f}% deles já cancelou.**"
-)
+#Passo 5: O problema (entender quantos clientes cancelaram)
+    #Total de clientes, % que cancelou, quantos seguem ativos
 
-k1, k2, k3, k4 = st.columns([1, 1, 1, 1])
-k1.metric("Clientes na base", fmt_int(total))
-k2.metric("Já cancelaram", f"{taxa_geral:.1f}%", help=f"{fmt_int(cancelados)} clientes")
-k3.metric("Seguem ativos", fmt_int(len(ativos)))
-with k4:
-    fig_rosca = px.pie(dff, names="situacao", hole=0.68, color="situacao",
-                       color_discrete_map=CORES)
-    fig_rosca.update_traces(textinfo="none",
-                            hovertemplate="%{label}: %{value} (%{percent})")
-    fig_rosca.update_layout(
-        showlegend=False, height=150, margin=dict(l=0, r=0, t=0, b=0),
-        annotations=[dict(text=f"{taxa_geral:.0f}%", x=0.5, y=0.5,
-                          font_size=24, showarrow=False)],
-    )
-    st.plotly_chart(fig_rosca, use_container_width=True)
+total_clientes = len(planilha) #Total de clientes (numero de linhas da base)
+
+
+cancelaram = (planilha["cancelou"] == "Sim").sum() #Quantos cancelaram (contar as linhas onde cancelou e "Sim")
+
+ativos = (planilha["cancelou"] == "Não").sum() #Quantos seguem ativos (contar as linhas onde cancelou e "Nao")
+
+percentual_cancelou = cancelaram / total_clientes * 100 #% que cancelou
+
+percentual_gasto_cancelados = (planilha.loc[planilha['cancelou'] == "Sim", 'total_gasto'].sum() / planilha['total_gasto'].sum()) * 100
 
 st.markdown(
-    "> Cada cancelamento é uma receita que deixa de entrar. Antes de pensar em "
-    "soluções, vale entender o que está por trás deles. Vamos começar pelo plano "
-    "que o cliente contratou."
+    "<div style='margin-top: 70px;'></div>", #Espaçamento do inicio da sessão
+    unsafe_allow_html=True
 )
 
-# =========================================================
-# 2. TIPO DE CONTRATO
-# =========================================================
-st.header("2. O tipo de contrato faz diferença?")
-st.write(
-    "Daqui em diante uso uma medida simples: a **% de clientes que cancelaram** em "
-    "cada grupo. Por exemplo, 60% significa que, de cada 100 clientes daquele "
-    "grupo, 60 cancelaram. Vamos comparar os três tipos de contrato."
-)
+st.header("1. O problema: Mais da metade da base de clientes já cancelou")
 
-t_contrato = taxa_por_grupo(dff, "contrato")
-t_contrato["posicao"] = t_contrato["taxa"].apply(
-    lambda t: "Acima da média" if t > taxa_geral else "Abaixo da média"
-)
-t_contrato["rotulo"] = t_contrato.apply(
-    lambda r: f"{r['taxa']:.0f}% · {fmt_int(r['clientes'])} clientes", axis=1
-)
-
-fig_ct = px.bar(
-    t_contrato, x="contrato", y="taxa", color="posicao", text="rotulo",
-    color_discrete_map={"Acima da média": COR_RISCO, "Abaixo da média": COR_OK},
-    hover_data={"rotulo": False, "posicao": False, "taxa": ":.1f", "clientes": True,
-                "cancelados": True, "peso_no_churn": ":.1f"},
-    labels={"taxa": "% de clientes que cancelaram", "contrato": "Tipo de contrato",
-            "clientes": "Clientes", "cancelados": "Cancelaram",
-            "peso_no_churn": "% de todas as saídas"},
-)
-fig_ct.update_traces(textposition="outside", cliponaxis=False)
-fig_ct.add_hline(y=taxa_geral, line_dash="dot", line_color="gray",
-                 annotation_text=f"média geral ({taxa_geral:.0f}%)",
-                 annotation_position="top left")
-fig_ct.update_xaxes(categoryorder="array", categoryarray=ORDEM_CONTRATO)
-fig_ct.update_layout(yaxis_range=[0, 118], legend_title_text="", height=380,
-                     margin=dict(t=30))
-st.plotly_chart(fig_ct, use_container_width=True)
-
-taxa_mensal = valor(t_contrato, "contrato", "Mensal")
-taxa_tri = valor(t_contrato, "contrato", "Trimestral")
-taxa_anual = valor(t_contrato, "contrato", "Anual")
-peso_mensal = valor(t_contrato, "contrato", "Mensal", "peso_no_churn")
 
 st.markdown(
-    f"No contrato **mensal**, **{pct(taxa_mensal)}** dos clientes cancelaram. No "
-    f"trimestral, {pct(taxa_tri)}; no anual, {pct(taxa_anual)}. O contrato mensal "
-    f"sozinho responde por **{pct(peso_mensal)}** de todos os cancelamentos."
+    f"Imagine uma empresa de serviço por assinatura com **{f"{total_clientes:,.0f}".replace(",", ".")} clientes**."
+    " Ao olhar a base, o time percebe algo preocupante: "
+    f"**{percentual_cancelou:.1f}% deles já cancelou.**  \n"
+    "Esses clientes representam quase metade de tudo o que a base já gastou."
 )
+
+coluna1, coluna2, coluna3, coluna4, coluna5 = st.columns(5) #Mostrar na pagina, com colunas lado a lado
+coluna1.metric("Clientes na base", f"{total_clientes:,}".replace(",", "."))
+coluna2.metric("Já cancelaram", f"{percentual_cancelou:.1f}%")
+coluna3.metric("Seguem ativos", f"{ativos:,}".replace(",", "."))
+coluna4.metric("% do gasto total dos cancelados:", f"{percentual_gasto_cancelados:.2f}%".replace(".", ","))
+
+grafico_rosca = px.pie(planilha, names="situacao", hole=0.6, color="situacao", color_discrete_map={"Cancelou": "#E4572E", "Não cancelou": "#2E86AB"}) #Grafico de rosca na quarta coluna
+grafico_rosca.update_traces(
+    textinfo="none", #Tirar os textos de cima das fatias
+    hovertemplate="%{label}: %{value} clientes (%{percent})<extra></extra>"
+)
+
+grafico_rosca.update_layout(
+    height=150,
+    margin=dict(l=0, r=0, t=0, b=0),
+    annotations=[dict(text=f"{percentual_cancelou:.0f}%", x=0.5, y=0.5,
+                      font_size=26, showarrow=False)],
+)
+coluna5.plotly_chart(grafico_rosca,use_container_width=True)
 
 st.markdown(
-    "> O contrato mostra **quem** é mais vulnerável. Falta entender **o que "
-    "acontece** antes de o cliente cancelar: existe algum sinal de alerta?"
+    '''>  Antes de pensar em soluções, vale entender **qual é o perfil de quem esta indo embora**.'''
 )
 
-# =========================================================
-# 3. O QUE ACONTECE ANTES DA SAÍDA
-# =========================================================
-st.header("3. O que acontece antes da saída?")
-st.write(
-    "Olhei dois comportamentos que a empresa já registra: quantas vezes o cliente "
-    "liga para o call center e quantos dias ele atrasa o pagamento. Cada ponto do "
-    "gráfico é um grupo de clientes com aquele nível de ligações ou de atraso, e "
-    "mostra a % deles que cancelou."
-)
-
-c_lig, c_atr = st.columns(2)
-
-with c_lig:
-    st.subheader("Ligações ao call center")
-    t_lig = taxa_por_grupo(dff, "ligacoes_callcenter").sort_values("ligacoes_callcenter")
-    st.plotly_chart(
-        grafico_linha(
-            t_lig, "ligacoes_callcenter", "Número de ligações",
-            [(LIMITE_LIGACOES, "ponto de virada", COR_RISCO, "top left")],
-        ),
-        use_container_width=True,
-    )
-    t_lig_faixa = taxa_por_grupo(
-        dff.assign(f=dff["ligacoes_callcenter"].ge(LIMITE_LIGACOES)), "f"
-    )
-    lig_alto = valor(t_lig_faixa, "f", True)
-    lig_baixo = valor(t_lig_faixa, "f", False)
-    st.markdown(
-        f"Com **{LIMITE_LIGACOES} ligações ou mais**, {pct(lig_alto)} cancelam. "
-        f"Abaixo disso, {pct(lig_baixo)}."
-    )
-
-with c_atr:
-    st.subheader("Atraso no pagamento")
-    t_atr = taxa_por_grupo(
-        dff.assign(inicio=(dff["dias_atraso"] // 5) * 5), "inicio"
-    ).sort_values("inicio")
-    st.plotly_chart(
-        grafico_linha(
-            t_atr, "inicio", "Dias de atraso (faixas de 5 dias)",
-            [(LIMITE_ATRASO, "ponto de virada", COR_RISCO, "top left")],
-        ),
-        use_container_width=True,
-    )
-    t_atr_faixa = taxa_por_grupo(
-        dff.assign(f=dff["dias_atraso"].ge(LIMITE_ATRASO)), "f"
-    )
-    atr_alto = valor(t_atr_faixa, "f", True)
-    atr_baixo = valor(t_atr_faixa, "f", False)
-    st.markdown(
-        f"Com **{LIMITE_ATRASO} dias ou mais** de atraso, {pct(atr_alto)} cancelam. "
-        f"Abaixo disso, {pct(atr_baixo)}."
-    )
-
-st.markdown("##### Fechando o diagnóstico")
-st.info(
-    f"- **Contrato:** {pct(taxa_mensal)} dos clientes do plano mensal cancelaram, "
-    f"contra {pct(taxa_anual)} do anual.\n"
-    f"- **Sinais:** a partir de {LIMITE_LIGACOES} ligações ao call center ou "
-    f"{LIMITE_ATRASO} dias de atraso, o cancelamento dispara.\n"
-    f"- Esses sinais aparecem **antes** da saída e já estão nos dados da empresa."
-)
-
-st.markdown("> A pergunta passa a ser: **o que fazer com isso?**")
-
-# =========================================================
-# 4. PROPOSTA
-# =========================================================
-st.header("4. A proposta: agir antes de o cliente sair")
-st.write(
-    "Hoje o cancelamento só é percebido depois que acontece. A proposta tem duas "
-    "frentes, uma para cada achado do diagnóstico."
-)
-
-f1, f2 = st.columns(2)
-with f1:
-    with st.container(border=True):
-        st.markdown("**Frente 1 · Incentivar a migração de contrato**")
-        st.write(
-            f"Como {pct(taxa_mensal)} dos clientes do plano mensal cancelaram "
-            f"(contra {pct(taxa_anual)} no anual), a equipe de vendas passa a "
-            f"estimular a migração para o plano trimestral ou anual, com incentivos "
-            f"como desconto."
-        )
-with f2:
-    with st.container(border=True):
-        st.markdown("**Frente 2 · Régua de alerta de retenção**")
-        st.write(
-            "O CRM monitora as ligações ao call center e os dias de atraso e "
-            "dispara uma ação específica quando o cliente chega a um gatilho, "
-            "antes do ponto de virada."
-        )
-
-st.markdown("##### Teste a régua de alerta")
-st.write(
-    "Mova os controles para testar a regra: o painel mostra quantas saídas ela "
-    "teria captado e quantos clientes ativos exigiriam ação."
-)
-
-max_lig = int(max(dff["ligacoes_callcenter"].max(), 2))
-max_atr = int(max(dff["dias_atraso"].max(), 2))
-s1, s2 = st.columns(2)
-lim_lig = s1.slider("Alertar a partir de quantas ligações", 1, max_lig,
-                    min(ALERTA_LIGACOES, max_lig))
-lim_atr = s2.slider("Alertar a partir de quantos dias de atraso", 1, max_atr,
-                    min(ALERTA_ATRASO, max_atr))
-
-flag = regra_alerta(dff, lim_lig, lim_atr)
-sinalizados = int(flag.sum())
-capturados = int(dff.loc[flag, "cancelou"].sum())
-cobertura = capturados / cancelados * 100
-precisao = capturados / sinalizados * 100 if sinalizados else float("nan")
-ativos_alerta = dff[flag & (dff["cancelou"] == 0)]
-
-m1, m2, m3 = st.columns(3)
-m1.metric("Saídas que a regra teria captado", f"{cobertura:.0f}%",
-          help="% dos clientes que cancelaram e teriam disparado o alerta")
-m2.metric("Precisão do alerta", pct(precisao),
-          help="% dos clientes sinalizados que de fato cancelaram")
-m3.metric("Clientes ativos para agir agora", fmt_int(len(ativos_alerta)))
-st.caption(
-    "Teste retroativo: usa o comportamento registrado na base, sem saber se o "
-    "sinal veio antes da decisão de sair. Quanto mais sensível a regra, mais "
-    "saídas capta e mais clientes a equipe precisa abordar."
-)
-
-st.markdown("##### Plano de ação proposto")
-plano = [
-    {"Gatilho": "Contrato mensal",
-     "Ação": "Incentivo para migrar para o plano trimestral ou anual (ex.: desconto)",
-     "Quem executa": "Vendas",
-     "Canal": "Contato ativo, e-mail e app",
-     "Métrica de sucesso": "% de clientes que migram"},
-    {"Gatilho": f"{lim_lig} ligações ao call center",
-     "Ação": "Atendimento especializado para resolver o problema",
-     "Quem executa": "Atendimento",
-     "Canal": "Telefone",
-     "Métrica de sucesso": "Redução de novas ligações e de cancelamentos"},
-    {"Gatilho": f"{lim_atr} dias de atraso",
-     "Ação": "Cobrança preventiva e opções de regularização",
-     "Quem executa": "Financeiro e CRM",
-     "Canal": "WhatsApp e e-mail",
-     "Métrica de sucesso": f"% que regulariza antes de {LIMITE_ATRASO} dias"},
-]
-st.table(pd.DataFrame(plano).set_index("Gatilho"))
+#Passo 6: Quem esta indo embora (perfil)
+    #Achado 1: taxa de cancelamento por tipo de contrato
+    #Achado 2: taxa de cancelamento por faixa de idade (18-30, 31-40, 41-50, 51 ou mais)
+    #Achado 3: taxa de cancelamento por sexo
 
 st.markdown(
-    "**Como medir o resultado:** comparar, em 90 dias, a retenção dos clientes que "
-    "receberam a ação com um grupo semelhante que não recebeu (grupo de controle). "
-    "O ganho só vale se superar o custo da ação."
+    "<div style='margin-top: 70px;'></div>", #Espaçamento do inicio da sessão
+    unsafe_allow_html=True
 )
 
-colunas_lista = ["CustomerID", "ligacoes_callcenter", "dias_atraso",
-                 "duracao_contrato", "total_gasto"]
-lista = ativos_alerta[colunas_lista].sort_values("dias_atraso", ascending=False)
-st.download_button(
-    "Baixar lista de clientes ativos em alerta (CSV)",
-    lista.to_csv(index=False).encode("utf-8"),
-    file_name="clientes_em_alerta.csv",
-    mime="text/csv",
-)
+st.header("2. O perfil: Quem esta saindo?")
 
-# =========================================================
-# CONCLUSÃO
-# =========================================================
-st.header("Conclusão e próximos passos")
-st.write(
-    "Os clientes avisam antes de sair. O contrato mensal concentra o risco e os "
-    "sinais de ligações e atraso mostram o momento de agir. Com incentivo à "
-    "migração de contrato e uma régua de alerta, a análise vira rotina de retenção."
-)
 st.markdown(
-    "**Próximos passos para implementar:**\n"
-    "1. Validar os gatilhos com os dados reais da empresa e ajustar os cortes.\n"
-    "2. Rodar um piloto de 90 dias com grupo de controle.\n"
-    "3. Medir retenção, custo da ação e retorno, e ampliar o que funcionar."
+    "Para identificar quais perfis apresentam maior propensão ao cancelamento, cruzei três variáveis: **faixa etária**, **sexo** e **tipo de contrato**.")
+
+
+
+planilha["faixa_idade"] = pd.cut(planilha["idade"], bins=[17, 30, 40, 50, float("inf")], #Criar faixas de idade
+                                 labels=["18 a 30", "31 a 40", "41 a 50", "51 ou mais"])
+
+
+
+#6.5 Sexo dentro de cada faixa de idade
+taxa_sexo_idade = (
+    planilha.groupby(["faixa_idade", "sexo"], observed=True)
+    .agg(
+        total=("cancelou", "size"),
+        cancelados=("cancelou", lambda x: (x == "Sim").sum())
+    )
+    .reset_index()
 )
 
-# =========================================================
-# EXPLORE OS DADOS (opcional)
-# =========================================================
-with st.expander("Explore outras características (idade, sexo, gasto e mais)"):
-    st.write("Veja, em percentual, como quem ficou e quem cancelou se distribuem em cada característica dos clientes.")
-    coluna = st.selectbox("Variável", list(NOMES_COLUNAS),
-                          format_func=lambda c: NOMES_COLUNAS[c])
-    fig_exp = px.histogram(dff, x=coluna, color="situacao", barnorm="percent",
-                           color_discrete_map=CORES)
-    fig_exp.update_layout(yaxis_title="% dos clientes na faixa", legend_title="Situação")
-    st.plotly_chart(fig_exp, use_container_width=True)
+taxa_sexo_idade["taxa"] = (
+    taxa_sexo_idade["cancelados"] / taxa_sexo_idade["total"] * 100
+)
 
-    st.markdown("**Esses fatores se sobrepõem?** Compare duas variáveis ao mesmo "
-                "tempo. Se a diferença persiste dentro de cada grupo, o fator tem "
-                "efeito próprio.")
-    OPCOES = {
-        "Tipo de contrato": "contrato",
-        "Sexo": "sexo",
-        "Faixa de idade": "faixa_idade",
-        "Faixa de total gasto": "faixa_gasto",
+taxa_sexo_idade["resultado"] = (
+    taxa_sexo_idade["taxa"].round(0).astype(int).astype(str)
+    + "% ("
+    + taxa_sexo_idade["cancelados"].astype(str)
+    + ")"
+)
+
+grafico_sexo_idade = px.bar(
+    taxa_sexo_idade,
+    x="faixa_idade",
+    y="taxa",
+    title="% de cancelamento por Idade e Sexo",
+    color="sexo",
+    barmode="group",
+    text=taxa_sexo_idade["taxa"].round(0).astype(int).astype(str) + "%",
+    color_discrete_map={
+    "Feminino": "#E4572E",
+    "Masculino": "#2E86AB"
+    },
+    hover_data={
+        "cancelados": True,
+        "total": True,
+        "taxa": False
+    },
+    labels={
+        "faixa_idade": "Faixa de idade",
+        "taxa": "% que cancelou",
+        "sexo": "Sexo",
+        "cancelados": "Clientes que cancelaram",
+        "total": "Total de clientes"
     }
-    ca, cb = st.columns(2)
-    var_x = ca.selectbox("Agrupar por", list(OPCOES), index=0)
-    var_cor = cb.selectbox("Comparar dentro de cada grupo", list(OPCOES), index=1)
-    if var_x == var_cor:
-        st.info("Escolha duas variáveis diferentes.")
-    else:
-        cruzada = (
-            dff.groupby([OPCOES[var_x], OPCOES[var_cor]], observed=True)["cancelou"]
-            .agg(clientes="count", taxa="mean")
-            .reset_index()
-        )
-        cruzada["taxa"] = cruzada["taxa"] * 100
-        fig_cruz = px.bar(cruzada, x=OPCOES[var_x], y="taxa", color=OPCOES[var_cor],
-                          barmode="group", hover_data=["clientes"])
-        fig_cruz.update_layout(yaxis_title="Taxa de cancelamento (%)",
-                               xaxis_title=var_x, legend_title=var_cor,
-                               yaxis_range=[0, 108])
-        st.plotly_chart(fig_cruz, use_container_width=True)
+)
 
-    st.markdown("**Base de dados**")
-    st.dataframe(dff.drop(columns=["CustomerID", "situacao", "contrato",
-                                   "faixa_idade", "faixa_gasto", "gasto_medio",
-                                   "faixa_gasto_medio"]))
+grafico_sexo_idade.update_layout(yaxis_range=[0, 110], height=300,)
 
-# =========================================================
-# SOBRE ESTA ANÁLISE
-# =========================================================
-with st.expander("Sobre esta análise"):
-    texto = (
-        f"- **Base:** {fmt_int(len(df))} clientes ({removidos} registros com dados "
-        f"vazios foram removidos).\n"
-        "- **Limitações:** a análise mostra associação, não causa. Atraso e ligações "
-        "podem ser consequência da vontade de sair. Padrões muito extremos são raros "
-        "em dados reais, o que sugere uma base com finalidade didática.\n"
-        "- **Idade e sexo:** servem para entender o perfil de quem sai, não para "
-        "tratar clientes de forma diferente.\n"
-        "- **Ferramentas:** Python, Pandas, Plotly e Streamlit.\n"
-        "- **Última atualização:** outubro de 2026.\n"
+
+taxa_contrato = (
+    planilha.groupby("duracao_contrato", observed=True)
+    .agg(
+        total=("cancelou", "size"),
+        cancelados=("cancelou", lambda x: (x == "Sim").sum())
     )
-    if MOSTRAR_ORIGEM:
-        texto += (
-            "- **Origem:** projeto desenvolvido a partir da Jornada Python da "
-            "Hashtag Treinamentos; a análise, a narrativa e o plano de retenção "
-            "são autorais.\n"
-        )
-    st.markdown(texto)
+    .reset_index()
+)
+
+taxa_contrato["taxa"] = (
+    taxa_contrato["cancelados"] / taxa_contrato["total"] * 100
+)
+
+
+grafico_contrato = px.bar(
+    taxa_contrato,
+    x="duracao_contrato",
+    y="taxa",
+    title="% de clientes que cancelaram por Tipo de Contrato",
+    text=taxa_contrato["taxa"].round(0).astype(int).astype(str) + "%",
+    color_discrete_sequence=["#2E86AB"],
+    hover_data={
+        "cancelados": True,
+        "total": True,
+        "taxa": False
+    },
+    category_orders={
+        "duracao_contrato": ["Mensal", "Trimestral", "Anual"]
+    },
+    labels={
+        "duracao_contrato": "Tipo de contrato",
+        "taxa": "% que cancelou",
+        "cancelados": "Clientes que cancelaram",
+        "total": "Total de clientes"
+    }
+)
+
+grafico_contrato.update_layout(yaxis_range=[0, 110], height=300)
+
+
+col_sexo_idade, col_contrato = st.columns(2)
+
+with col_sexo_idade:
+    st.plotly_chart(grafico_sexo_idade, use_container_width=True)
+    st.markdown(">**Clientes com 51 anos ou mais apresentam taxa de cancelamento de 100%**, " \
+    "independentemente do sexo. Nas demais faixas etárias, as taxas variam entre homens e mulheres. Na base geral, " \
+    "a taxa de cancelamento é de 67,06% entre mulheres e 48,82% entre homens, uma diferença de 18,24 pontos percentuais." \
+    " ***A análise por sexo é exclusivamente analítica e não deve orientar tratamentos diferenciados entre clientes.***")
+
+with col_contrato:
+    st.plotly_chart(grafico_contrato, use_container_width=True)
+    st.markdown(">**A taxa de cancelamento é de 100% entre clientes com contrato mensal**. " \
+    "A diferença observada é expressiva, enquanto as taxas dos contratos trimestrais e anuais são próximas (46%)." \
+    "Esses resultados descrevem o comportamento da base analisada, mas não permitem concluir que o tipo de contrato seja a causa dos cancelamentos.")
+
+st.markdown(
+    "<div style='margin-top: 50px;'></div>",
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    "No mapa de calor, quanto mais vermelha a célula, maior a taxa de cancelamento.")
+
+taxa_sexo_idade_contrato = (
+    planilha.groupby(
+        ["faixa_idade", "sexo", "duracao_contrato"],
+        observed=True
+    )["cancelou"]
+    .agg(
+        clientes="count",
+        cancelaram=lambda x: (x == "Sim").sum(),
+        taxa=lambda x: (x == "Sim").mean() * 100
+    )
+    .reset_index()
+)
+
+
+fig = px.density_heatmap(
+    taxa_sexo_idade_contrato,
+    x="duracao_contrato",
+    y="faixa_idade",
+    z="taxa",
+    facet_col="sexo",
+    histfunc="avg",
+    color_continuous_scale="RdYlBu_r",
+    range_color=[0, 100],
+    text_auto=".0f",
+    labels={
+        "duracao_contrato": "Tipo de contrato",
+        "faixa_idade": "Faixa etária",
+        "taxa": "Cancelamento (%)",
+        "sexo": "Sexo"},
+    category_orders={
+        "duracao_contrato": ["Mensal", "Trimestral", "Anual"],
+        "faixa_idade": ["51 ou mais", "41 a 50", "31 a 40", "18 a 30"],
+        "sexo": ["Feminino", "Masculino"]}
+)
+
+fig.update_layout(
+    coloraxis_colorbar_title="Cancelamento (%)",
+    height=300, #Altura do grafico
+    margin=dict(t=15, b=10) #Espaçamento interno e externo do grafico
+)
+
+st.plotly_chart(fig, use_container_width=True)
+
+
+
+st.markdown('''
+    > O cancelamento chega a 100% entre clientes com 51 anos ou mais, independentemente do sexo e do tipo de contrato. Entre clientes de 18 a 50 anos, essa mesma taxa é observada nos contratos mensais. Na análise geral por sexo, as mulheres apresentam uma taxa de cancelamento superior à dos homens.
+
+> Esses padrões evidenciam diferenças entre os grupos analisados, mas não permitem determinar, isoladamente, as causas dos cancelamentos. Para aprofundar o diagnóstico, **o próximo passo é investigar o comportamento dos clientes e identificar outras características associadas à saída.**
+''')
+
+
+
+#Passo 7: O que acontece antes da saida (comportamento)
+    #Achado 3: taxa de cancelamento por numero de ligacoes ao call center
+    #Achado 4: taxa de cancelamento por dias de atraso (faixas de 5 dias)
+    #Em cada um: groupby + mean, grafico de linha (px.line) e uma frase com o resultado
+    #Fechar o diagnostico em 3 ou 4 frases (so constatacoes, sem solucao ainda)
+
+#Calculos: taxa de cancelamento por numero de ligacoes e por dias de atraso
+taxa_ligacoes = (planilha.groupby("ligacoes_callcenter")["cancelou"]
+                 .agg(clientes="count",
+                      cancelaram=lambda x: (x == "Sim").sum(),
+                      taxa=lambda x: (x == "Sim").mean() * 100)
+                 .reset_index())
+
+taxa_atraso = (planilha.groupby("dias_atraso")["cancelou"]
+               .agg(clientes="count",
+                    cancelaram=lambda x: (x == "Sim").sum(),
+                    taxa=lambda x: (x == "Sim").mean() * 100)
+               .reset_index())
+
+#Grafico de linha: ligacoes ao call center
+grafico_ligacoes = px.line(
+    taxa_ligacoes, x="ligacoes_callcenter", y="taxa", markers=True,
+    hover_data={"clientes": True, "cancelaram": True, "taxa": ":.1f"},
+    title="Ligações ao call center",
+    labels={"ligacoes_callcenter": "Número de ligações", "taxa": "% que cancelou",
+            "clientes": "Clientes", "cancelaram": "Cancelaram"},
+)
+grafico_ligacoes.update_traces(line_color="#E4572E")
+grafico_ligacoes.add_vline(x=6, line_dash="dash", line_color="gray",
+                           annotation_text="100% cancelam", annotation_position="top left")
+grafico_ligacoes.add_vrect(x0=3, x1=5, fillcolor="lightgray",
+    opacity=0.3,
+    line_width=0,
+    annotation_text="zona de atenção",
+    annotation_position="bottom"
+)
+grafico_ligacoes.update_layout(yaxis_range=[0, 110], height=340)
+
+#Grafico de linha: dias de atraso
+grafico_atraso = px.line(
+    taxa_atraso, x="dias_atraso", y="taxa", markers=True,
+    hover_data={"clientes": True, "cancelaram": True, "taxa": ":.1f"},
+    title="Atraso no pagamento",
+    labels={"dias_atraso": "Dias de atraso", "taxa": "% que cancelou",
+            "clientes": "Clientes", "cancelaram": "Cancelaram"},
+)
+grafico_atraso.update_traces(line_color="#E4572E")
+grafico_atraso.add_vline(x=21, line_dash="dash", line_color="gray",
+                         annotation_text="21 dias: 100% cancelam", annotation_position="top left")
+grafico_atraso.add_vrect(
+    x0=15,
+    x1=20,
+    fillcolor="lightgray",
+    opacity=0.3,
+    line_width=0,
+    annotation_text="janela de ação",
+    annotation_position="bottom"
+)
+grafico_atraso.update_layout(yaxis_range=[0, 110], height=340)
+
+
+st.markdown(
+    "<div style='margin-top: 70px;'></div>", #Espaçamento do inicio da sessão
+    unsafe_allow_html=True
+)
+
+st.header("3. Comportamento: O que acontece antes da saida?")
+
+st.write(
+    '''Olhei dois comportamentos que a empresa já registra: quantas vezes o cliente liga para o call center 
+    e quantos dias ele atrasa o pagamento. Cada ponto do gráfico é um grupo de clientes com aquele nível 
+    de ligações ou de atraso, e mostra a % deles que cancelou.''')
+
+
+planilha["grupo_ligacoes"] = planilha["ligacoes_callcenter"].apply(
+    lambda x: "Até 3 ligações" if x <= 3 else "4 ligações ou mais"
+)
+
+taxa_ligacoes = (
+    planilha.groupby("grupo_ligacoes", observed=True)["cancelou"]
+    .agg(
+        total_clientes="count",
+        cancelamentos=lambda x: (x == "Sim").sum(),
+        taxa_cancelamento=lambda x: (x == "Sim").mean() * 100
+    )
+    .reset_index()
+)
+
+ordem = ["Até 3 ligações", "4 ligações ou mais"]
+
+col_lig, col_atr = st.columns(2)
+
+with col_lig:
+    st.plotly_chart(grafico_ligacoes, use_container_width=True)
+    st.write("O cancelamento sobe depressa a partir da 3ª ligação")
+    st.write(">Com até 2 ligações, cerca de 30% cancelam.  \nA taxa sobe para 41% com 3 ligações, 59% com 4 e 94% com 5.  \nA partir de **6 ligações**, todos cancelaram.")
+
+with col_atr:
+    st.plotly_chart(grafico_atraso, use_container_width=True)
+    st.write("O risco não sobe aos poucos: ele salta no dia 21")
+    st.write(">Até 20 dias de atraso, a taxa de cancelamento fica em torno de 46% (igual à de quem não atrasa). No dia 21, passa a 100%. Os dias anteriores são uma janela para agir, não um sinal de risco maior.")
+
+
+st.write("Esses dados mostram associação: a base não tem datas, então não dá para provar que as ligações e os atrasos vieram antes da decisão de cancelar. Essa é a hipótese que a proposta precisa validar.")
+
+#Fechando o diagnostico
+
+taxa_idade = planilha.groupby("faixa_idade")["cancelou"].apply(lambda x: (x == "Sim").mean() * 100) # Taxa de cancelamento por faixa de idade
+
+
+#Calculos (os numeros que entram nas frases)
+taxa_contrato = planilha.groupby("duracao_contrato")["cancelou"].apply(lambda x: (x == "Sim").mean() * 100)
+taxa_mensal = taxa_contrato["Mensal"]
+taxa_anual = taxa_contrato["Anual"]
+
+taxa_51 = taxa_idade["51 ou mais"]
+
+st.markdown(
+    "<div style='margin-top: 70px;'></div>", #Espaçamento do inicio da sessão
+    unsafe_allow_html=True
+)
